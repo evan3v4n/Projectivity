@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Github } from 'lucide-react'
 
 const ProfileDashboard = () => {
   const [skills, setSkills] = useState([
