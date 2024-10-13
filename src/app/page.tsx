@@ -46,6 +46,7 @@ export default function HomePage() {
   const { theme, setTheme } = useTheme()
   const [projectCount, setProjectCount] = useState(0)
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0)
+  const [previousProjectIndex, setPreviousProjectIndex] = useState(0)
 
   // useEffect(() => {
   //   setMounted(true)
@@ -162,66 +163,69 @@ export default function HomePage() {
       </section>
 
       {/* Featured Projects */}
-<section className="py-20 bg-gray-50 dark:bg-gray-900">
-  <div className="container mx-auto px-4">
-    <h2 className="text-4xl font-bold text-center mb-12 text-purple-800 dark:text-purple-200">Featured Projects</h2>
-    <div className="max-w-4xl mx-auto">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentProjectIndex}
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden"
-        >
-          <div className="md:flex">
-            {/* <div className="md:w-1/2">
-              <Image
-                src={featuredProjects[currentProjectIndex].image}
-                alt={featuredProjects[currentProjectIndex].name}
-                width={300}
-                height={200}
-                className="w-full h-64 object-cover"
-              />
-            </div> */}
-            <div className="md:w-1/2 p-6">
-              <h3 className="text-2xl font-bold text-purple-700 dark:text-purple-300 mb-2">
-                {featuredProjects[currentProjectIndex].name}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                by {featuredProjects[currentProjectIndex].team}
-              </p>
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Technologies:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {featuredProjects[currentProjectIndex].tech.split(', ').map((tech, index) => (
-                    <span key={index} className="bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm">
-                      {tech}
-                    </span>
-                  ))}
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12 text-purple-800 dark:text-purple-200">Featured Projects</h2>
+          <div className="max-w-4xl mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentProjectIndex}
+                initial={{ opacity: 0, x: currentProjectIndex > previousProjectIndex ? 100 : -100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: currentProjectIndex > previousProjectIndex ? -100 : 100 }}
+                transition={{ duration: 0.5 }}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden"
+              >
+                <div className="md:flex">
+                  {/* <div className="md:w-1/2">
+                    <Image
+                      src={featuredProjects[currentProjectIndex].image}
+                      alt={featuredProjects[currentProjectIndex].name}
+                      width={300}
+                      height={200}
+                      className="w-full h-64 object-cover"
+                    />
+                  </div> */}
+                  <div className="md:w-1/2 p-6">
+                    <h3 className="text-2xl font-bold text-purple-700 dark:text-purple-300 mb-2">
+                      {featuredProjects[currentProjectIndex].name}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      by {featuredProjects[currentProjectIndex].team}
+                    </p>
+                    <div className="mb-6">
+                      <h4 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Technologies:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {featuredProjects[currentProjectIndex].tech.split(', ').map((tech, index) => (
+                          <span key={index} className="bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm">
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <Button className="w-full">View Project</Button>
+                  </div>
                 </div>
-              </div>
-              <Button className="w-full">View Project</Button>
+              </motion.div>
+            </AnimatePresence>
+            <div className="flex justify-center mt-8 space-x-2">
+              {featuredProjects.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setPreviousProjectIndex(currentProjectIndex);
+                    setCurrentProjectIndex(index);
+                  }}
+                  className={`w-3 h-3 rounded-full transition-colors duration-300 ${
+                    index === currentProjectIndex ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                  aria-label={`View project ${index + 1}`}
+                />
+              ))}
             </div>
           </div>
-        </motion.div>
-      </AnimatePresence>
-      <div className="flex justify-center mt-8 space-x-2">
-        {featuredProjects.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentProjectIndex(index)}
-            className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-              index === currentProjectIndex ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
-            }`}
-            aria-label={`View project ${index + 1}`}
-          />
-        ))}
-      </div>
-    </div>
-  </div>
-</section>
+        </div>
+      </section>
 
       {/* Testimonials */}
       <section className="bg-purple-50 dark:bg-purple-900 py-20">
