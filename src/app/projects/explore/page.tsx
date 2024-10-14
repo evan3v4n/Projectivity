@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Grid, List, Share, BookmarkPlus, Filter, X } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { validateHeaderValue } from 'http'
+import { allTechnologies } from '../../../utils/technologies'
 
 // Add this type definition
 type Project = {
@@ -268,16 +269,7 @@ const categories = [
 ]
 
 const skills = [
-  "Python",
-  "JavaScript",
-  "React",
-  "Node.js",
-  "Solidity",
-  "TensorFlow",
-  "Java",
-  "C++",
-  "Swift",
-  "Kotlin"
+  ...allTechnologies
 ]
 
 // Add this type definition
@@ -317,7 +309,7 @@ export default function ExploreProjects() {
   }, [])
 
   useEffect(() => {
-    const filtered = projects.filter(project => 
+    const filtered = projects.filter(project =>
       (!selectedCategory || project.category === selectedCategory) &&
       (!selectedStatus || project.status === selectedStatus) &&
       selectedSkills.every(skill => project.technologies.includes(skill)) &&
@@ -437,7 +429,7 @@ export default function ExploreProjects() {
             </div>
           </div>
         </aside>
-  
+
         {/* Main Content */}
         <main className="flex-1">
           <div className="flex flex-col md:flex-row justify-between items-center mb-6">
@@ -474,11 +466,11 @@ export default function ExploreProjects() {
               </div>
             </div>
           </div>
-  
+
           <div className="flex items-center space-x-2 mb-6">
             <label htmlFor="projectsPerPage" className="text-sm text-gray-700 dark:text-gray-300">Show:</label>
-            <Select 
-              onValueChange={(value) => setProjectsPerPage(Number(value))} 
+            <Select
+              onValueChange={(value) => setProjectsPerPage(Number(value))}
               value={projectsPerPage.toString()}
             >
               <SelectTrigger className="h-8 w-20 text-sm">
@@ -493,7 +485,7 @@ export default function ExploreProjects() {
             </Select>
             <span className="text-sm text-gray-700 dark:text-gray-300">per page</span>
           </div>
-  
+
           <div className={cn(
             "grid gap-6",
             view === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
@@ -505,8 +497,8 @@ export default function ExploreProjects() {
                     <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{project.title}</span>
                     <Badge variant={
                       project.status === 'Recruiting' ? 'default' :
-                      project.status === 'In Progress' ? 'secondary' :
-                      'outline'
+                        project.status === 'In Progress' ? 'secondary' :
+                          'outline'
                     }>{project.status}</Badge>
                   </CardTitle>
                 </CardHeader>
@@ -596,13 +588,13 @@ export default function ExploreProjects() {
               </Card>
             ))}
           </div>
-  
+
           {paginatedProjects.length === 0 && (
             <div className="text-center py-12">
               <p className="text-xl text-gray-500 dark:text-gray-400">No projects found matching your criteria.</p>
             </div>
           )}
-  
+
           {paginatedProjects.length > 0 && (
             <div className="mt-8 flex justify-center space-x-2">
               <Button

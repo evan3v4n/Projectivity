@@ -26,26 +26,42 @@ const categories = [
   "Mobile App Development",
   "Data Science",
   "Machine Learning",
-  "UI/UX Design",
   "Game Development",
   "Blockchain",
   "IoT",
   "Cybersecurity",
-  "Cloud Computing"
-]
-
+  "Cloud Computing",
+];
 const categoryTechnologies = {
-  "Web Development": ["React", "Angular", "Vue.js", "Node.js", "Express", "Django", "Ruby on Rails"],
-  "Mobile App Development": ["React Native", "Flutter", "Swift", "Kotlin", "Xamarin"],
-  "Data Science": ["Python", "R", "SQL", "Tableau", "Power BI"],
-  "Machine Learning": ["TensorFlow", "PyTorch", "Scikit-learn", "Keras", "NLTK"],
-  "UI/UX Design": ["Figma", "Adobe XD", "Sketch", "InVision", "Zeplin"],
-  "Game Development": ["Unity", "Unreal Engine", "Godot", "Phaser", "Cocos2d"],
-  "Blockchain": ["Solidity", "Ethereum", "Hyperledger", "Corda", "Bitcoin Core"],
-  "IoT": ["Arduino", "Raspberry Pi", "MQTT", "Zigbee", "LoRaWAN"],
-  "Cybersecurity": ["Wireshark", "Metasploit", "Nmap", "Burp Suite", "Kali Linux"],
-  "Cloud Computing": ["AWS", "Azure", "Google Cloud", "Docker", "Kubernetes"]
-}
+  "Web Development": [
+    "React", "Angular", "Vue.js", "Node.js", "Express", "Django", "Ruby on Rails",
+    "ASP.NET", "TypeScript", "GraphQL"
+  ],
+  "Mobile App Development": [
+    "React Native", "Flutter", "Swift", "Kotlin", "Xamarin"
+  ],
+  "Data Science": [
+    "Python", "R", "SQL", "Tableau", "Power BI", "Pandas", "NumPy"
+  ],
+  "Machine Learning": [
+    "TensorFlow", "PyTorch", "Scikit-learn", "Keras"
+  ],
+  "Game Development": [
+    "Unity", "Unreal Engine", "Godot"
+  ],
+  "Blockchain": [
+    "Solidity", "Ethereum", "Hyperledger"
+  ],
+  "IoT": [
+    "Arduino", "Raspberry Pi", "MQTT"
+  ],
+  "Cybersecurity": [
+    "Wireshark", "Metasploit", "Nmap", "Kali Linux"
+  ],
+  "Cloud Computing": [
+    "AWS", "Azure", "Google Cloud", "Docker", "Kubernetes"
+  ]
+};
 
 const steps = ['Basic Info', 'Technologies', 'Team & Timeline', 'Finalize']
 
@@ -218,11 +234,10 @@ export default function CreateProjectPage() {
                             key={tech}
                             variant="outline"
                             size="sm"
-                            className={`transition-colors ${
-                              field.value.includes(tech)
-                                ? 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700'
-                                : 'text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900'
-                            }`}
+                            className={`transition-colors ${field.value.includes(tech)
+                              ? 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700'
+                              : 'text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900'
+                              }`}
                             onClick={() => {
                               if (field.value.includes(tech)) {
                                 field.onChange(field.value.filter(t => t !== tech))
@@ -243,7 +258,7 @@ export default function CreateProjectPage() {
             <div className="flex items-center space-x-2">
               <Input
                 type="text"
-                placeholder="Add custom technology"
+                placeholder="Other"
                 value={customTech}
                 onChange={(e) => setCustomTech(e.target.value)}
                 className="border-gray-300 focus:border-purple-500 focus:ring-purple-500"
@@ -347,7 +362,7 @@ export default function CreateProjectPage() {
                           }}
                           className="border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                         />
-                        
+
                         {index === field.value.length - 1 && (
                           <Button
                             type="button"
@@ -445,8 +460,8 @@ export default function CreateProjectPage() {
                   {renderStep()}
                   <div className="mt-8 flex justify-between">
                     {currentStep > 0 && (
-                      <Button 
-                        type="button" 
+                      <Button
+                        type="button"
                         onClick={prevStep}
                         variant="outline"
                         className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
@@ -455,17 +470,17 @@ export default function CreateProjectPage() {
                       </Button>
                     )}
                     {currentStep < steps.length - 1 ? (
-                      <Button 
-                        type="button" 
-                        onClick={nextStep} 
+                      <Button
+                        type="button"
+                        onClick={nextStep}
                         disabled={!isValid}
                         className="ml-auto bg-purple-600 hover:bg-purple-700 text-white"
                       >
                         Next <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={!isValid}
                         className="ml-auto bg-purple-600 hover:bg-purple-700 text-white"
                       >
