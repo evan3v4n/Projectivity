@@ -7,22 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Star, Clock, Users, ChevronLeft, Share2 } from 'lucide-react'
-
-type Project = {
-    id: number;
-    title: string;
-    description: string;
-    category: string;
-    status: string;
-    technologies: string[];
-    owner: string;
-    openPositions: number;
-    timeCommitment: string;
-    popularity: number;
-    teamMembers: { name: string; role: string }[];
-    timeline: string;
-    learningObjectives: string[];
-  };
+import { Project } from '@/constants/project'
 
 // This would typically come from your API or database
 const project: Project = {

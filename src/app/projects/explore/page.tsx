@@ -14,24 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Grid, List, Share, BookmarkPlus, Filter, X } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { validateHeaderValue } from 'http'
-import { allTechnologies } from '../../../utils/technologies'
-
-// Add this type definition
-type Project = {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  status: string;
-  technologies: string[];
-  owner: string;
-  openPositions: number;
-  timeCommitment: string;
-  popularity: number;
-  teamMembers: { name: string; role: string }[];
-  timeline: string;
-  learningObjectives: string[];
-};
+import { Project, PROJECT_CATEGORIES, TECHNOLOGIES } from '@/constants/project'
 
 // Mock data for projects
 const mockProjects: Project[] = [
@@ -258,18 +241,11 @@ const mockProjects: Project[] = [
 
 
 const categories = [
-  "Artificial Intelligence",
-  "Blockchain",
-  "Web Development",
-  "Mobile Development",
-  "Data Science",
-  "IoT",
-  "Cybersecurity",
-  "Game Development"
+  ...PROJECT_CATEGORIES
 ]
 
 const skills = [
-  ...allTechnologies
+  ...TECHNOLOGIES
 ]
 
 // Add this type definition
