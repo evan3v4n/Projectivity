@@ -1,0 +1,104 @@
+# Projectivity GraphQL Schema
+
+type Project {
+  id: ID!
+  title: String!
+  description: String!
+  category: String!
+  status: ProjectStatus!
+  technologies: [String!]!
+  owner: User!
+  openPositions: Int!
+  timeCommitment: String!
+  popularity: Int!
+  teamMembers: [TeamMember!]!
+  timeline: String!
+  learningObjectives: [String!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type User {
+  id: ID!
+  username: String!
+  email: String!
+  projects: [Project!]!
+  ownedProjects: [Project!]!
+  skills: [String!]!
+  bio: String
+  joinedAt: DateTime!
+}
+
+type TeamMember {
+  id: ID!
+  user: User!
+  project: Project!
+  role: String!
+  joinedAt: DateTime!
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+}
+
+scalar DateTime
+
+type Query {
+  project(id: ID!): Project
+  projects(
+    category: String
+    status: ProjectStatus
+    technology: String
+    limit: Int
+    offset: Int
+  ): [Project!]!
+  
+  user(id: ID!): User
+  users(limit: Int, offset: Int): [User!]!
+  
+  searchProjects(query: String!): [Project!]!
+}
+
+type Mutation {
+  createProject(input: CreateProjectInput!): Project!
+  updateProject(id: ID!, input: UpdateProjectInput!): Project!
+  deleteProject(id: ID!): Boolean!
+  
+  joinProject(projectId: ID!, role: String!): TeamMember!
+  leaveProject(projectId: ID!): Boolean!
+  
+  updateUser(id: ID!, input: UpdateUserInput!): User!
+  
+  addTechnology(projectId: ID!, technology: String!): Project!
+  removeTechnology(projectId: ID!, technology: String!): Project!
+}
+
+input CreateProjectInput {
+  title: String!
+  description: String!
+  category: String!
+  technologies: [String!]!
+  openPositions: Int!
+  timeCommitment: String!
+  learningObjectives: [String!]!
+}
+
+input UpdateProjectInput {
+  title: String
+  description: String
+  category: String
+  status: ProjectStatus
+  openPositions: Int
+  timeCommitment: String
+  learningObjectives: [String!]
+}
+
+input UpdateUserInput {
+  username: String
+  email: String
+  bio: String
+  skills: [String!]
+}
