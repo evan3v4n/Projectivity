@@ -12,5 +12,6 @@ require (
 require (
 	github.com/agnivade/levenshtein v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 )
