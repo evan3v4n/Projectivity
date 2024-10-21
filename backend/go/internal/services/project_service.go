@@ -662,3 +662,91 @@ func (s *ProjectService) GetRelatedProjects(ctx context.Context, projectID strin
 
 	return relatedProjects, nil
 }
+
+func (s *ProjectService) AddTechnology(ctx context.Context, projectID string, technology string) (*model.Project, error) {
+	err := database.Transaction(ctx, func(tx *sql.Tx) error {
+		// Check if the project exists
+		checkProjectQuery := `SELECT id FROM projects WHERE id = $1`
+		var projectIDCheck string
+		err := tx.QueryRowContext(ctx, checkProjectQuery, projectID).Scan(&projectIDCheck)
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("project with ID %s does not exist", projectID)
+		} else if err != nil {
+			return fmt.Errorf("error checking project existence: %w", err)
+		}
+
+		// Add the technology to the array
+		updateQuery := `
+			UPDATE projects 
+			SET technologies = array_append(technologies, $1),
+				updated_at = $2
+			WHERE id = $3 AND NOT ($1 = ANY(technologies))
+		`
+		result, err := tx.ExecContext(ctx, updateQuery, technology, time.Now().UTC(), projectID)
+		if err != nil {
+			return fmt.Errorf("failed to add technology: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("error checking rows affected: %w", err)
+		}
+
+		if rowsAffected == 0 {
+			return fmt.Errorf("technology already exists or project not found")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch and return the updated project
+	return s.GetProjectByID(ctx, projectID)
+}
+
+func (s *ProjectService) RemoveTechnology(ctx context.Context, projectID string, technology string) (*model.Project, error) {
+	err := database.Transaction(ctx, func(tx *sql.Tx) error {
+		// Check if the project exists
+		checkProjectQuery := `SELECT id FROM projects WHERE id = $1`
+		var projectIDCheck string
+		err := tx.QueryRowContext(ctx, checkProjectQuery, projectID).Scan(&projectIDCheck)
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("project with ID %s does not exist", projectID)
+		} else if err != nil {
+			return fmt.Errorf("error checking project existence: %w", err)
+		}
+
+		// Remove the technology from the array
+		updateQuery := `
+			UPDATE projects 
+			SET technologies = array_remove(technologies, $1),
+				updated_at = $2
+			WHERE id = $3 AND $1 = ANY(technologies)
+		`
+		result, err := tx.ExecContext(ctx, updateQuery, technology, time.Now().UTC(), projectID)
+		if err != nil {
+			return fmt.Errorf("failed to remove technology: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("error checking rows affected: %w", err)
+		}
+
+		if rowsAffected == 0 {
+			return fmt.Errorf("technology not found in project or project not found")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch and return the updated project
+	return s.GetProjectByID(ctx, projectID)
+}

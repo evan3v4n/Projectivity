@@ -1,11 +1,12 @@
 package graph
 
-// import (
-// 	"context"
-
-// 	"github.com/99designs/gqlgen/codegen/testserver/nullabledirectives/generated"
-// )
+import (
+	"github.com/evan3v4n/Projectivity/backend/go/internal/services"
+)
 
 type Resolver struct {
-	// TODO: Add any fields you need here, such as database connections
+	UserService    *services.UserService
+	ProjectService *services.ProjectService
+	TeamService    *services.TeamService
+	TaskService    *services.TaskService
 }

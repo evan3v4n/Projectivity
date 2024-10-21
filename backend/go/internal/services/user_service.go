@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/evan3v4n/Projectivity/backend/go/graph/model"
@@ -240,6 +241,16 @@ func (s *UserService) UpdateLastActive(ctx context.Context, id string) error {
 }
 
 func (s *UserService) ListUsers(ctx context.Context, limit, offset int) ([]*model.User, error) {
+	// Ensure limit is positive
+	if limit <= 0 {
+		limit = 10 // Default to 10 if limit is 0 or negative
+	}
+
+	// Ensure offset is non-negative
+	if offset < 0 {
+		offset = 0
+	}
+
 	query := `
 		SELECT id, username, email, first_name, last_name, bio, profile_image_url, skills, education_level, years_experience, preferred_role, github_url, linkedin_url, portfolio_url, email_verified, last_active, time_zone, available_hours, certifications, languages, project_preferences, created_at, updated_at
 		FROM users
@@ -378,4 +389,40 @@ func (s *UserService) GetUserByUsername(ctx context.Context, username string) (*
 	}
 
 	return user, nil
+}
+
+func (s *UserService) ChangePassword(ctx context.Context, userID, oldPassword, newPassword string) (*model.User, error) {
+	var storedPasswordHash string
+
+	// First, retrieve the current password hash
+	query := `SELECT password_hash FROM users WHERE id = $1`
+	err := s.DB.QueryRowContext(ctx, query, userID).Scan(&storedPasswordHash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user not found")
+		}
+		return nil, fmt.Errorf("failed to retrieve user: %w", err)
+	}
+
+	// Verify the old password
+	err = bcrypt.CompareHashAndPassword([]byte(storedPasswordHash), []byte(oldPassword))
+	if err != nil {
+		return nil, errors.New("incorrect old password")
+	}
+
+	// Hash the new password
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash new password: %w", err)
+	}
+
+	// Update the password in the database
+	updateQuery := `UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3`
+	_, err = s.DB.ExecContext(ctx, updateQuery, newPasswordHash, time.Now().UTC(), userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update password: %w", err)
+	}
+
+	// Retrieve and return the updated user
+	return s.GetUserByID(ctx, userID)
 }

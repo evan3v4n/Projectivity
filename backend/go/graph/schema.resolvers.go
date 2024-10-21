@@ -9,151 +9,219 @@ import (
 	"fmt"
 
 	"github.com/evan3v4n/Projectivity/backend/go/graph/model"
+	"github.com/evan3v4n/Projectivity/backend/go/internal/auth"
 )
 
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.CreateProjectInput) (*model.Project, error) {
-	panic(fmt.Errorf("not implemented: CreateProject - createProject"))
+	// Assuming you have a way to get the current user's ID from the context
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unauthorized: %w", err)
+	}
+	return r.ProjectService.CreateProject(ctx, input, userID)
 }
 
 // UpdateProject is the resolver for the updateProject field.
 func (r *mutationResolver) UpdateProject(ctx context.Context, id string, input model.UpdateProjectInput) (*model.Project, error) {
-	panic(fmt.Errorf("not implemented: UpdateProject - updateProject"))
+	return r.ProjectService.UpdateProject(ctx, id, input)
 }
 
 // DeleteProject is the resolver for the deleteProject field.
 func (r *mutationResolver) DeleteProject(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteProject - deleteProject"))
+	err := r.ProjectService.DeleteProject(ctx, id)
+	return err == nil, err
 }
 
 // JoinTeam is the resolver for the joinTeam field.
 func (r *mutationResolver) JoinTeam(ctx context.Context, teamID string, role string) (*model.TeamMember, error) {
-	panic(fmt.Errorf("not implemented: JoinTeam - joinTeam"))
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unauthorized: %w", err)
+	}
+	return r.TeamService.AddTeamMember(ctx, teamID, userID, role)
 }
 
 // LeaveTeam is the resolver for the leaveTeam field.
 func (r *mutationResolver) LeaveTeam(ctx context.Context, teamID string) (bool, error) {
-	panic(fmt.Errorf("not implemented: LeaveTeam - leaveTeam"))
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("unauthorized: %w", err)
+	}
+	err = r.TeamService.RemoveTeamMember(ctx, teamID, userID)
+	return err == nil, err
 }
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, id string, input model.UpdateUserInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: UpdateUser - updateUser"))
+	return r.UserService.UpdateUser(ctx, id, input)
 }
 
 // AddTechnology is the resolver for the addTechnology field.
 func (r *mutationResolver) AddTechnology(ctx context.Context, projectID string, technology string) (*model.Project, error) {
-	panic(fmt.Errorf("not implemented: AddTechnology - addTechnology"))
+	// Implement this method in your ProjectService
+	return r.ProjectService.AddTechnology(ctx, projectID, technology)
 }
 
 // RemoveTechnology is the resolver for the removeTechnology field.
 func (r *mutationResolver) RemoveTechnology(ctx context.Context, projectID string, technology string) (*model.Project, error) {
-	panic(fmt.Errorf("not implemented: RemoveTechnology - removeTechnology"))
+	// Implement this method in your ProjectService
+	return r.ProjectService.RemoveTechnology(ctx, projectID, technology)
 }
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
+	return r.UserService.CreateUser(ctx, input)
 }
 
 // ChangePassword is the resolver for the changePassword field.
 func (r *mutationResolver) ChangePassword(ctx context.Context, id string, oldPassword string, newPassword string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: ChangePassword - changePassword"))
+	return r.UserService.ChangePassword(ctx, id, oldPassword, newPassword)
 }
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input model.CreateTaskInput) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented: CreateTask - createTask"))
+	return r.TaskService.CreateTask(ctx, input)
 }
 
 // UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, id string, input model.UpdateTaskInput) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented: UpdateTask - updateTask"))
+	return r.TaskService.UpdateTask(ctx, id, input)
 }
 
 // DeleteTask is the resolver for the deleteTask field.
 func (r *mutationResolver) DeleteTask(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteTask - deleteTask"))
+	err := r.TaskService.DeleteTask(ctx, id)
+	return err == nil, err
 }
 
 // AssignTask is the resolver for the assignTask field.
 func (r *mutationResolver) AssignTask(ctx context.Context, taskID string, userID string) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented: AssignTask - assignTask"))
+	err := r.TaskService.AssignTask(ctx, taskID, userID)
+	if err != nil {
+		return nil, err
+	}
+	return r.TaskService.GetTaskByID(ctx, taskID)
 }
 
 // UnassignTask is the resolver for the unassignTask field.
 func (r *mutationResolver) UnassignTask(ctx context.Context, taskID string) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented: UnassignTask - unassignTask"))
+	err := r.TaskService.UnassignTask(ctx, taskID)
+	if err != nil {
+		return nil, err
+	}
+	return r.TaskService.GetTaskByID(ctx, taskID)
 }
 
 // UpdateTaskStatus is the resolver for the updateTaskStatus field.
 func (r *mutationResolver) UpdateTaskStatus(ctx context.Context, taskID string, status model.TaskStatus) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented: UpdateTaskStatus - updateTaskStatus"))
+	err := r.TaskService.UpdateTaskStatus(ctx, taskID, status)
+	if err != nil {
+		return nil, err
+	}
+	return r.TaskService.GetTaskByID(ctx, taskID)
 }
 
 // CreateTeam is the resolver for the createTeam field.
 func (r *mutationResolver) CreateTeam(ctx context.Context, input model.CreateTeamInput) (*model.Team, error) {
-	panic(fmt.Errorf("not implemented: CreateTeam - createTeam"))
+	return r.TeamService.CreateTeam(ctx, input)
 }
 
 // UpdateTeam is the resolver for the updateTeam field.
 func (r *mutationResolver) UpdateTeam(ctx context.Context, id string, input model.UpdateTeamInput) (*model.Team, error) {
-	panic(fmt.Errorf("not implemented: UpdateTeam - updateTeam"))
+	return r.TeamService.UpdateTeam(ctx, id, input)
 }
 
 // DeleteTeam is the resolver for the deleteTeam field.
 func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, error) {
-	panic(fmt.Errorf("not implemented: DeleteTeam - deleteTeam"))
+	err := r.TeamService.DeleteTeam(ctx, id)
+	return err == nil, err
 }
 
 // Project is the resolver for the project field.
 func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project, error) {
-	panic(fmt.Errorf("not implemented: Project - project"))
+	return r.ProjectService.GetProjectByID(ctx, id)
 }
 
 // Projects is the resolver for the projects field.
 func (r *queryResolver) Projects(ctx context.Context, category *string, status *model.ProjectStatus, technology *string, limit *int, offset *int) ([]*model.Project, error) {
-	panic(fmt.Errorf("not implemented: Projects - projects"))
+	// Construct a search query based on the provided filters
+	query := ""
+	if category != nil {
+		query += *category + " "
+	}
+	if status != nil {
+		query += string(*status) + " "
+	}
+	if technology != nil {
+		query += *technology + " "
+	}
+
+	// Use default values if limit or offset are nil
+	limitVal := 10
+	offsetVal := 0
+	if limit != nil {
+		limitVal = *limit
+	}
+	if offset != nil {
+		offsetVal = *offset
+	}
+
+	return r.ProjectService.SearchProjects(ctx, query, limitVal, offsetVal)
 }
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	return r.UserService.GetUserByID(ctx, id)
 }
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context, limit *int, offset *int) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Users - users"))
+	// Set default values if limit or offset are nil
+	limitVal := 10 // Default limit
+	offsetVal := 0 // Default offset
+
+	if limit != nil {
+		limitVal = *limit
+	}
+	if offset != nil {
+		offsetVal = *offset
+	}
+
+	return r.UserService.ListUsers(ctx, limitVal, offsetVal)
 }
 
 // SearchProjects is the resolver for the searchProjects field.
 func (r *queryResolver) SearchProjects(ctx context.Context, query string) ([]*model.Project, error) {
-	panic(fmt.Errorf("not implemented: SearchProjects - searchProjects"))
+	// You can add default limit and offset values here
+	return r.ProjectService.SearchProjects(ctx, query, 10, 0)
 }
 
 // Task is the resolver for the task field.
 func (r *queryResolver) Task(ctx context.Context, id string) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented: Task - task"))
+	return r.TaskService.GetTaskByID(ctx, id)
 }
 
 // Tasks is the resolver for the tasks field.
 func (r *queryResolver) Tasks(ctx context.Context, projectID string, status *model.TaskStatus, limit *int, offset *int) ([]*model.Task, error) {
-	panic(fmt.Errorf("not implemented: Tasks - tasks"))
+	// Implement filtering by status, limit, and offset in your TaskService
+	return r.TaskService.ListTasksByProject(ctx, projectID)
 }
 
 // UserTasks is the resolver for the userTasks field.
 func (r *queryResolver) UserTasks(ctx context.Context, userID string, status *model.TaskStatus, limit *int, offset *int) ([]*model.Task, error) {
-	panic(fmt.Errorf("not implemented: UserTasks - userTasks"))
+	// Implement filtering by status, limit, and offset in your TaskService
+	return r.TaskService.GetTasksByUser(ctx, userID)
 }
 
 // Team is the resolver for the team field.
 func (r *queryResolver) Team(ctx context.Context, id string) (*model.Team, error) {
-	panic(fmt.Errorf("not implemented: Team - team"))
+	return r.TeamService.GetTeamByID(ctx, id)
 }
 
 // TeamsByProject is the resolver for the teamsByProject field.
 func (r *queryResolver) TeamsByProject(ctx context.Context, projectID string) ([]*model.Team, error) {
-	panic(fmt.Errorf("not implemented: TeamsByProject - teamsByProject"))
+	return r.TeamService.GetTeamsByProject(ctx, projectID)
 }
 
 // Mutation returns MutationResolver implementation.
