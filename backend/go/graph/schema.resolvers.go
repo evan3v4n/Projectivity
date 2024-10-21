@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/evan3v4n/Projectivity/backend/go/graph/model"
@@ -71,7 +72,13 @@ func (r *mutationResolver) RemoveTechnology(ctx context.Context, projectID strin
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
-	return r.UserService.CreateUser(ctx, input)
+	// Call the CreateUser function from the UserService
+	user, err := r.UserService.CreateUser(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 // ChangePassword is the resolver for the changePassword field.
@@ -136,6 +143,44 @@ func (r *mutationResolver) UpdateTeam(ctx context.Context, id string, input mode
 func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, error) {
 	err := r.TeamService.DeleteTeam(ctx, id)
 	return err == nil, err
+}
+
+// LoginUser is the resolver for the loginUser field.
+func (r *mutationResolver) LoginUser(ctx context.Context, email string, password string) (*model.AuthPayload, error) {
+	// Call the LoginUser function from the UserService
+	token, err := r.UserService.LoginUser(ctx, email, password)
+	if err != nil {
+		return nil, errors.New("invalid email or password")
+	}
+
+	// Fetch the user details
+	user, err := r.UserService.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Create and return the AuthPayload
+	return &model.AuthPayload{
+		Token: token,
+		User:  user,
+	}, nil
+}
+
+// LogoutUser is the resolver for the logoutUser field.
+func (r *mutationResolver) LogoutUser(ctx context.Context) (bool, error) {
+	// Get the user ID from the context
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return false, errors.New("user not authenticated")
+	}
+
+	// Call the logout service
+	err = r.UserService.LogoutUser(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // Project is the resolver for the project field.
@@ -232,18 +277,3 @@ func (r *queryResolver) TeamsByProject(ctx context.Context, projectID string) ([
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) JoinProject(ctx context.Context, projectID string, role string) (*model.TeamMember, error) {
-	panic(fmt.Errorf("not implemented: JoinProject - joinProject"))
-}
-func (r *mutationResolver) LeaveProject(ctx context.Context, projectID string) (bool, error) {
-	panic(fmt.Errorf("not implemented: LeaveProject - leaveProject"))
-}
-*/

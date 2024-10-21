@@ -154,6 +154,9 @@ type Mutation {
   createTeam(input: CreateTeamInput!): Team!
   updateTeam(id: ID!, input: UpdateTeamInput!): Team!
   deleteTeam(id: ID!): Boolean!
+  
+  loginUser(email: String!, password: String!): AuthPayload!
+  logoutUser: Boolean!
 }
 
 input CreateProjectInput {
@@ -178,7 +181,7 @@ input UpdateProjectInput {
   timeCommitment: String
   learningObjectives: [String!]
   technologies: [String!]
-  timeline: String
+  timeline: String 
   popularity: Int
 }
 
@@ -261,4 +264,9 @@ input CreateTeamInput {
 input UpdateTeamInput {
   name: String
   description: String
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
 }

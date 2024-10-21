@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/evan3v4n/Projectivity/backend/go/graph/model"
+	"github.com/evan3v4n/Projectivity/backend/go/internal/auth"
 	"github.com/evan3v4n/Projectivity/backend/go/internal/database"
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -23,6 +24,7 @@ func NewUserService(db *sql.DB) *UserService {
 
 func (s *UserService) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	fmt.Println(hashedPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -450,6 +452,48 @@ func (s *UserService) ChangePassword(ctx context.Context, userID, oldPassword, n
 
 	// Retrieve and return the updated user
 	return s.GetUserByID(ctx, userID)
+}
+
+func (s *UserService) LoginUser(ctx context.Context, email, password string) (string, error) {
+	user, err := s.GetUserByEmail(ctx, email)
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	// Fetch the password hash from the database
+	var storedPasswordHash string
+	err = s.DB.QueryRowContext(ctx, "SELECT password_hash FROM users WHERE id = $1", user.ID).Scan(&storedPasswordHash)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve password hash: %w", err)
+	}
+
+	// Verify the password
+	err = bcrypt.CompareHashAndPassword([]byte(storedPasswordHash), []byte(password))
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	// Generate a JWT token
+	token, err := auth.GenerateToken(user.ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	return token, nil
+}
+
+func (s *UserService) LogoutUser(ctx context.Context, userID string) error {
+	// Update the user's last active time
+	err := s.UpdateLastActive(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update last active time: %w", err)
+	}
+
+	// Invalidate the token
+	token := auth.GetTokenFromContext(ctx)
+	auth.InvalidateToken(token)
+
+	return nil
 }
 
 // func (s *UserService) GetUsers(ctx context.Context, limit, offset int) ([]*model.User, error) {

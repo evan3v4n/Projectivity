@@ -8,6 +8,11 @@ import (
 	"strconv"
 )
 
+type AuthPayload struct {
+	Token string `json:"token"`
+	User  *User  `json:"user"`
+}
+
 type CreateProjectInput struct {
 	Title              string         `json:"title"`
 	Description        string         `json:"description"`

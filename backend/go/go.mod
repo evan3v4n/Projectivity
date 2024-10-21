@@ -6,6 +6,7 @@ toolchain go1.22.8
 
 require (
 	github.com/99designs/gqlgen v0.17.55
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
 	github.com/vektah/gqlparser/v2 v2.5.18

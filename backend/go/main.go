@@ -3,10 +3,12 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/evan3v4n/Projectivity/backend/go/graph"
+	"github.com/evan3v4n/Projectivity/backend/go/internal/auth"
 	"github.com/evan3v4n/Projectivity/backend/go/internal/database"
 	"github.com/evan3v4n/Projectivity/backend/go/internal/services"
 )
@@ -30,6 +32,10 @@ func main() {
 	}
 	defer db.Close()
 
+	if err := auth.InitJWTSecretKey(); err != nil {
+		log.Fatalf("Failed to initialize JWT secret key: %v", err)
+	}
+
 	// Initialize services
 	userService := services.NewUserService(db)
 	taskService := services.NewTaskService(db)
@@ -47,9 +53,13 @@ func main() {
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", auth.AuthMiddleware(srv))
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", defaultPort)
-	log.Fatal(http.ListenAndServe(":"+defaultPort, nil))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
 
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
