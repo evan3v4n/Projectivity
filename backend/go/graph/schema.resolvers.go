@@ -26,14 +26,14 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, id string) (bool, 
 	panic(fmt.Errorf("not implemented: DeleteProject - deleteProject"))
 }
 
-// JoinProject is the resolver for the joinProject field.
-func (r *mutationResolver) JoinProject(ctx context.Context, projectID string, role string) (*model.TeamMember, error) {
-	panic(fmt.Errorf("not implemented: JoinProject - joinProject"))
+// JoinTeam is the resolver for the joinTeam field.
+func (r *mutationResolver) JoinTeam(ctx context.Context, teamID string, role string) (*model.TeamMember, error) {
+	panic(fmt.Errorf("not implemented: JoinTeam - joinTeam"))
 }
 
-// LeaveProject is the resolver for the leaveProject field.
-func (r *mutationResolver) LeaveProject(ctx context.Context, projectID string) (bool, error) {
-	panic(fmt.Errorf("not implemented: LeaveProject - leaveProject"))
+// LeaveTeam is the resolver for the leaveTeam field.
+func (r *mutationResolver) LeaveTeam(ctx context.Context, teamID string) (bool, error) {
+	panic(fmt.Errorf("not implemented: LeaveTeam - leaveTeam"))
 }
 
 // UpdateUser is the resolver for the updateUser field.
@@ -49,6 +49,61 @@ func (r *mutationResolver) AddTechnology(ctx context.Context, projectID string, 
 // RemoveTechnology is the resolver for the removeTechnology field.
 func (r *mutationResolver) RemoveTechnology(ctx context.Context, projectID string, technology string) (*model.Project, error) {
 	panic(fmt.Errorf("not implemented: RemoveTechnology - removeTechnology"))
+}
+
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
+}
+
+// ChangePassword is the resolver for the changePassword field.
+func (r *mutationResolver) ChangePassword(ctx context.Context, id string, oldPassword string, newPassword string) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: ChangePassword - changePassword"))
+}
+
+// CreateTask is the resolver for the createTask field.
+func (r *mutationResolver) CreateTask(ctx context.Context, input model.CreateTaskInput) (*model.Task, error) {
+	panic(fmt.Errorf("not implemented: CreateTask - createTask"))
+}
+
+// UpdateTask is the resolver for the updateTask field.
+func (r *mutationResolver) UpdateTask(ctx context.Context, id string, input model.UpdateTaskInput) (*model.Task, error) {
+	panic(fmt.Errorf("not implemented: UpdateTask - updateTask"))
+}
+
+// DeleteTask is the resolver for the deleteTask field.
+func (r *mutationResolver) DeleteTask(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteTask - deleteTask"))
+}
+
+// AssignTask is the resolver for the assignTask field.
+func (r *mutationResolver) AssignTask(ctx context.Context, taskID string, userID string) (*model.Task, error) {
+	panic(fmt.Errorf("not implemented: AssignTask - assignTask"))
+}
+
+// UnassignTask is the resolver for the unassignTask field.
+func (r *mutationResolver) UnassignTask(ctx context.Context, taskID string) (*model.Task, error) {
+	panic(fmt.Errorf("not implemented: UnassignTask - unassignTask"))
+}
+
+// UpdateTaskStatus is the resolver for the updateTaskStatus field.
+func (r *mutationResolver) UpdateTaskStatus(ctx context.Context, taskID string, status model.TaskStatus) (*model.Task, error) {
+	panic(fmt.Errorf("not implemented: UpdateTaskStatus - updateTaskStatus"))
+}
+
+// CreateTeam is the resolver for the createTeam field.
+func (r *mutationResolver) CreateTeam(ctx context.Context, input model.CreateTeamInput) (*model.Team, error) {
+	panic(fmt.Errorf("not implemented: CreateTeam - createTeam"))
+}
+
+// UpdateTeam is the resolver for the updateTeam field.
+func (r *mutationResolver) UpdateTeam(ctx context.Context, id string, input model.UpdateTeamInput) (*model.Team, error) {
+	panic(fmt.Errorf("not implemented: UpdateTeam - updateTeam"))
+}
+
+// DeleteTeam is the resolver for the deleteTeam field.
+func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteTeam - deleteTeam"))
 }
 
 // Project is the resolver for the project field.
@@ -76,6 +131,31 @@ func (r *queryResolver) SearchProjects(ctx context.Context, query string) ([]*mo
 	panic(fmt.Errorf("not implemented: SearchProjects - searchProjects"))
 }
 
+// Task is the resolver for the task field.
+func (r *queryResolver) Task(ctx context.Context, id string) (*model.Task, error) {
+	panic(fmt.Errorf("not implemented: Task - task"))
+}
+
+// Tasks is the resolver for the tasks field.
+func (r *queryResolver) Tasks(ctx context.Context, projectID string, status *model.TaskStatus, limit *int, offset *int) ([]*model.Task, error) {
+	panic(fmt.Errorf("not implemented: Tasks - tasks"))
+}
+
+// UserTasks is the resolver for the userTasks field.
+func (r *queryResolver) UserTasks(ctx context.Context, userID string, status *model.TaskStatus, limit *int, offset *int) ([]*model.Task, error) {
+	panic(fmt.Errorf("not implemented: UserTasks - userTasks"))
+}
+
+// Team is the resolver for the team field.
+func (r *queryResolver) Team(ctx context.Context, id string) (*model.Team, error) {
+	panic(fmt.Errorf("not implemented: Team - team"))
+}
+
+// TeamsByProject is the resolver for the teamsByProject field.
+func (r *queryResolver) TeamsByProject(ctx context.Context, projectID string) ([]*model.Team, error) {
+	panic(fmt.Errorf("not implemented: TeamsByProject - teamsByProject"))
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
@@ -84,3 +164,18 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *mutationResolver) JoinProject(ctx context.Context, projectID string, role string) (*model.TeamMember, error) {
+	panic(fmt.Errorf("not implemented: JoinProject - joinProject"))
+}
+func (r *mutationResolver) LeaveProject(ctx context.Context, projectID string) (bool, error) {
+	panic(fmt.Errorf("not implemented: LeaveProject - leaveProject"))
+}
+*/

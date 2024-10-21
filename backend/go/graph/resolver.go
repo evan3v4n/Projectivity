@@ -1,9 +1,11 @@
 package graph
 
-// This file will not be regenerated automatically.
-//
-// It serves as dependency injection for your app, add any dependencies you require here.
+// import (
+// 	"context"
+
+// 	"github.com/99designs/gqlgen/codegen/testserver/nullabledirectives/generated"
+// )
 
 type Resolver struct {
-	// TODO: Add any fields you need here
+	// TODO: Add any fields you need here, such as database connections
 }

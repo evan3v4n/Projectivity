@@ -9,13 +9,53 @@ import (
 )
 
 type CreateProjectInput struct {
-	Title              string   `json:"title"`
-	Description        string   `json:"description"`
-	Category           string   `json:"category"`
-	Technologies       []string `json:"technologies"`
-	OpenPositions      int      `json:"openPositions"`
-	TimeCommitment     string   `json:"timeCommitment"`
-	LearningObjectives []string `json:"learningObjectives"`
+	Title              string         `json:"title"`
+	Description        string         `json:"description"`
+	Category           string         `json:"category"`
+	Technologies       []string       `json:"technologies"`
+	OpenPositions      int            `json:"openPositions"`
+	TimeCommitment     string         `json:"timeCommitment"`
+	LearningObjectives []string       `json:"learningObjectives"`
+	Status             *ProjectStatus `json:"status,omitempty"`
+	Timeline           *string        `json:"timeline,omitempty"`
+	Popularity         *int           `json:"popularity,omitempty"`
+}
+
+type CreateTaskInput struct {
+	Title       string       `json:"title"`
+	Description *string      `json:"description,omitempty"`
+	Status      *TaskStatus  `json:"status,omitempty"`
+	Priority    TaskPriority `json:"priority"`
+	DueDate     *string      `json:"dueDate,omitempty"`
+	ProjectID   string       `json:"projectId"`
+	AssigneeID  *string      `json:"assigneeId,omitempty"`
+}
+
+type CreateTeamInput struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+	ProjectID   string  `json:"projectId"`
+}
+
+type CreateUserInput struct {
+	Username           string   `json:"username"`
+	Email              string   `json:"email"`
+	Password           string   `json:"password"`
+	FirstName          string   `json:"firstName"`
+	LastName           string   `json:"lastName"`
+	Skills             []string `json:"skills"`
+	Bio                *string  `json:"bio,omitempty"`
+	EducationLevel     *string  `json:"educationLevel,omitempty"`
+	YearsExperience    int      `json:"yearsExperience"`
+	PreferredRole      *string  `json:"preferredRole,omitempty"`
+	GithubURL          *string  `json:"githubUrl,omitempty"`
+	LinkedInURL        *string  `json:"linkedInUrl,omitempty"`
+	PortfolioURL       *string  `json:"portfolioUrl,omitempty"`
+	TimeZone           *string  `json:"timeZone,omitempty"`
+	AvailableHours     *string  `json:"availableHours,omitempty"`
+	Certifications     []string `json:"certifications,omitempty"`
+	Languages          []string `json:"languages,omitempty"`
+	ProjectPreferences []string `json:"projectPreferences,omitempty"`
 }
 
 type Mutation struct {
@@ -32,6 +72,7 @@ type Project struct {
 	OpenPositions      int           `json:"openPositions"`
 	TimeCommitment     string        `json:"timeCommitment"`
 	Popularity         int           `json:"popularity"`
+	Team               *Team         `json:"team,omitempty"`
 	TeamMembers        []*TeamMember `json:"teamMembers"`
 	Timeline           string        `json:"timeline"`
 	LearningObjectives []string      `json:"learningObjectives"`
@@ -39,15 +80,47 @@ type Project struct {
 	UpdatedAt          string        `json:"updatedAt"`
 }
 
+type ProjectFilterInput struct {
+	Category         *string        `json:"category,omitempty"`
+	Status           *ProjectStatus `json:"status,omitempty"`
+	Technology       *string        `json:"technology,omitempty"`
+	MinOpenPositions *int           `json:"minOpenPositions,omitempty"`
+	MaxOpenPositions *int           `json:"maxOpenPositions,omitempty"`
+	TimeCommitment   *string        `json:"timeCommitment,omitempty"`
+}
+
 type Query struct {
 }
 
+type Task struct {
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Description *string      `json:"description,omitempty"`
+	Status      TaskStatus   `json:"status"`
+	Priority    TaskPriority `json:"priority"`
+	DueDate     *string      `json:"dueDate,omitempty"`
+	Assignee    *User        `json:"assignee,omitempty"`
+	Project     *Project     `json:"project"`
+	CreatedAt   string       `json:"createdAt"`
+	UpdatedAt   string       `json:"updatedAt"`
+}
+
+type Team struct {
+	ID          string        `json:"id"`
+	Name        string        `json:"name"`
+	Description *string       `json:"description,omitempty"`
+	Project     *Project      `json:"project"`
+	Members     []*TeamMember `json:"members"`
+	CreatedAt   string        `json:"createdAt"`
+	UpdatedAt   string        `json:"updatedAt"`
+}
+
 type TeamMember struct {
-	ID       string   `json:"id"`
-	User     *User    `json:"user"`
-	Project  *Project `json:"project"`
-	Role     string   `json:"role"`
-	JoinedAt string   `json:"joinedAt"`
+	ID       string `json:"id"`
+	User     *User  `json:"user"`
+	Team     *Team  `json:"team"`
+	Role     string `json:"role"`
+	JoinedAt string `json:"joinedAt"`
 }
 
 type UpdateProjectInput struct {
@@ -58,24 +131,73 @@ type UpdateProjectInput struct {
 	OpenPositions      *int           `json:"openPositions,omitempty"`
 	TimeCommitment     *string        `json:"timeCommitment,omitempty"`
 	LearningObjectives []string       `json:"learningObjectives,omitempty"`
+	Technologies       []string       `json:"technologies,omitempty"`
+	Timeline           *string        `json:"timeline,omitempty"`
+	Popularity         *int           `json:"popularity,omitempty"`
+}
+
+type UpdateTaskInput struct {
+	Title       *string       `json:"title,omitempty"`
+	Description *string       `json:"description,omitempty"`
+	Status      *TaskStatus   `json:"status,omitempty"`
+	Priority    *TaskPriority `json:"priority,omitempty"`
+	DueDate     *string       `json:"dueDate,omitempty"`
+	AssigneeID  *string       `json:"assigneeId,omitempty"`
+}
+
+type UpdateTeamInput struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
 }
 
 type UpdateUserInput struct {
-	Username *string  `json:"username,omitempty"`
-	Email    *string  `json:"email,omitempty"`
-	Bio      *string  `json:"bio,omitempty"`
-	Skills   []string `json:"skills,omitempty"`
+	Username           *string  `json:"username,omitempty"`
+	Email              *string  `json:"email,omitempty"`
+	FirstName          *string  `json:"firstName,omitempty"`
+	LastName           *string  `json:"lastName,omitempty"`
+	Bio                *string  `json:"bio,omitempty"`
+	ProfileImageURL    *string  `json:"profileImageUrl,omitempty"`
+	Skills             []string `json:"skills,omitempty"`
+	EducationLevel     *string  `json:"educationLevel,omitempty"`
+	YearsExperience    *int     `json:"yearsExperience,omitempty"`
+	PreferredRole      *string  `json:"preferredRole,omitempty"`
+	GithubURL          *string  `json:"githubUrl,omitempty"`
+	LinkedInURL        *string  `json:"linkedInUrl,omitempty"`
+	PortfolioURL       *string  `json:"portfolioUrl,omitempty"`
+	TimeZone           *string  `json:"timeZone,omitempty"`
+	AvailableHours     *string  `json:"availableHours,omitempty"`
+	Certifications     []string `json:"certifications,omitempty"`
+	Languages          []string `json:"languages,omitempty"`
+	ProjectPreferences []string `json:"projectPreferences,omitempty"`
 }
 
 type User struct {
-	ID            string     `json:"id"`
-	Username      string     `json:"username"`
-	Email         string     `json:"email"`
-	Projects      []*Project `json:"projects"`
-	OwnedProjects []*Project `json:"ownedProjects"`
-	Skills        []string   `json:"skills"`
-	Bio           *string    `json:"bio,omitempty"`
-	JoinedAt      string     `json:"joinedAt"`
+	ID                 string     `json:"id"`
+	Username           string     `json:"username"`
+	Email              string     `json:"email"`
+	FirstName          string     `json:"firstName"`
+	LastName           string     `json:"lastName"`
+	Bio                *string    `json:"bio,omitempty"`
+	ProfileImageURL    *string    `json:"profileImageUrl,omitempty"`
+	Skills             []string   `json:"skills"`
+	EducationLevel     *string    `json:"educationLevel,omitempty"`
+	YearsExperience    int        `json:"yearsExperience"`
+	PreferredRole      *string    `json:"preferredRole,omitempty"`
+	GithubURL          *string    `json:"githubUrl,omitempty"`
+	LinkedInURL        *string    `json:"linkedInUrl,omitempty"`
+	PortfolioURL       *string    `json:"portfolioUrl,omitempty"`
+	EmailVerified      bool       `json:"emailVerified"`
+	LastActive         string     `json:"lastActive"`
+	TimeZone           *string    `json:"timeZone,omitempty"`
+	AvailableHours     *string    `json:"availableHours,omitempty"`
+	Certifications     []string   `json:"certifications,omitempty"`
+	Languages          []string   `json:"languages,omitempty"`
+	ProjectPreferences []string   `json:"projectPreferences,omitempty"`
+	Projects           []*Project `json:"projects"`
+	OwnedProjects      []*Project `json:"ownedProjects"`
+	JoinedAt           string     `json:"joinedAt"`
+	CreatedAt          string     `json:"createdAt"`
+	UpdatedAt          string     `json:"updatedAt"`
 }
 
 type ProjectStatus string
@@ -120,5 +242,95 @@ func (e *ProjectStatus) UnmarshalGQL(v interface{}) error {
 }
 
 func (e ProjectStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type TaskPriority string
+
+const (
+	TaskPriorityLow    TaskPriority = "LOW"
+	TaskPriorityMedium TaskPriority = "MEDIUM"
+	TaskPriorityHigh   TaskPriority = "HIGH"
+	TaskPriorityUrgent TaskPriority = "URGENT"
+)
+
+var AllTaskPriority = []TaskPriority{
+	TaskPriorityLow,
+	TaskPriorityMedium,
+	TaskPriorityHigh,
+	TaskPriorityUrgent,
+}
+
+func (e TaskPriority) IsValid() bool {
+	switch e {
+	case TaskPriorityLow, TaskPriorityMedium, TaskPriorityHigh, TaskPriorityUrgent:
+		return true
+	}
+	return false
+}
+
+func (e TaskPriority) String() string {
+	return string(e)
+}
+
+func (e *TaskPriority) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TaskPriority(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TaskPriority", str)
+	}
+	return nil
+}
+
+func (e TaskPriority) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type TaskStatus string
+
+const (
+	TaskStatusTodo       TaskStatus = "TODO"
+	TaskStatusInProgress TaskStatus = "IN_PROGRESS"
+	TaskStatusReview     TaskStatus = "REVIEW"
+	TaskStatusDone       TaskStatus = "DONE"
+)
+
+var AllTaskStatus = []TaskStatus{
+	TaskStatusTodo,
+	TaskStatusInProgress,
+	TaskStatusReview,
+	TaskStatusDone,
+}
+
+func (e TaskStatus) IsValid() bool {
+	switch e {
+	case TaskStatusTodo, TaskStatusInProgress, TaskStatusReview, TaskStatusDone:
+		return true
+	}
+	return false
+}
+
+func (e TaskStatus) String() string {
+	return string(e)
+}
+
+func (e *TaskStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TaskStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TaskStatus", str)
+	}
+	return nil
+}
+
+func (e TaskStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

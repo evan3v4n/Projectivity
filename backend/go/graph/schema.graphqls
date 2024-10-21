@@ -11,6 +11,7 @@ type Project {
   openPositions: Int!
   timeCommitment: String!
   popularity: Int!
+  team: Team
   teamMembers: [TeamMember!]!
   timeline: String!
   learningObjectives: [String!]!
@@ -22,17 +23,45 @@ type User {
   id: ID!
   username: String!
   email: String!
+  firstName: String!
+  lastName: String!
+  bio: String
+  profileImageUrl: String
+  skills: [String!]!
+  educationLevel: String
+  yearsExperience: Int!
+  preferredRole: String
+  githubUrl: String
+  linkedInUrl: String
+  portfolioUrl: String
+  emailVerified: Boolean!
+  lastActive: DateTime!
+  timeZone: String
+  availableHours: String
+  certifications: [String!]
+  languages: [String!]
+  projectPreferences: [String!]
   projects: [Project!]!
   ownedProjects: [Project!]!
-  skills: [String!]!
-  bio: String
   joinedAt: DateTime!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Team {
+  id: ID!
+  name: String!
+  description: String
+  project: Project!
+  members: [TeamMember!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type TeamMember {
   id: ID!
   user: User!
-  project: Project!
+  team: Team!
   role: String!
   joinedAt: DateTime!
 }
@@ -45,6 +74,33 @@ enum ProjectStatus {
 }
 
 scalar DateTime
+
+type Task {
+  id: ID!
+  title: String!
+  description: String
+  status: TaskStatus!
+  priority: TaskPriority!
+  dueDate: DateTime
+  assignee: User
+  project: Project!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
 
 type Query {
   project(id: ID!): Project
@@ -60,20 +116,44 @@ type Query {
   users(limit: Int, offset: Int): [User!]!
   
   searchProjects(query: String!): [Project!]!
+  
+  task(id: ID!): Task
+  tasks(projectId: ID!, status: TaskStatus, limit: Int, offset: Int): [Task!]!
+  userTasks(userId: ID!, status: TaskStatus, limit: Int, offset: Int): [Task!]!
+  
+  team(id: ID!): Team
+  teamsByProject(projectId: ID!): [Team!]!
 }
 
 type Mutation {
+  # Existing mutations
   createProject(input: CreateProjectInput!): Project!
   updateProject(id: ID!, input: UpdateProjectInput!): Project!
   deleteProject(id: ID!): Boolean!
   
-  joinProject(projectId: ID!, role: String!): TeamMember!
-  leaveProject(projectId: ID!): Boolean!
+  joinTeam(teamId: ID!, role: String!): TeamMember!
+  leaveTeam(teamId: ID!): Boolean!
   
   updateUser(id: ID!, input: UpdateUserInput!): User!
   
   addTechnology(projectId: ID!, technology: String!): Project!
   removeTechnology(projectId: ID!, technology: String!): Project!
+
+  # New mutation for user creation
+  createUser(input: CreateUserInput!): User!
+
+  changePassword(id: ID!, oldPassword: String!, newPassword: String!): User!
+
+  createTask(input: CreateTaskInput!): Task!
+  updateTask(id: ID!, input: UpdateTaskInput!): Task!
+  deleteTask(id: ID!): Boolean!
+  assignTask(taskId: ID!, userId: ID!): Task!
+  unassignTask(taskId: ID!): Task!
+  updateTaskStatus(taskId: ID!, status: TaskStatus!): Task!
+  
+  createTeam(input: CreateTeamInput!): Team!
+  updateTeam(id: ID!, input: UpdateTeamInput!): Team!
+  deleteTeam(id: ID!): Boolean!
 }
 
 input CreateProjectInput {
@@ -84,6 +164,9 @@ input CreateProjectInput {
   openPositions: Int!
   timeCommitment: String!
   learningObjectives: [String!]!
+  status: ProjectStatus = PLANNING
+  timeline: String
+  popularity: Int = 0
 }
 
 input UpdateProjectInput {
@@ -94,11 +177,88 @@ input UpdateProjectInput {
   openPositions: Int
   timeCommitment: String
   learningObjectives: [String!]
+  technologies: [String!]
+  timeline: String
+  popularity: Int
 }
 
 input UpdateUserInput {
   username: String
   email: String
+  firstName: String
+  lastName: String
   bio: String
+  profileImageUrl: String
   skills: [String!]
+  educationLevel: String
+  yearsExperience: Int
+  preferredRole: String
+  githubUrl: String
+  linkedInUrl: String
+  portfolioUrl: String
+  timeZone: String
+  availableHours: String
+  certifications: [String!]
+  languages: [String!]
+  projectPreferences: [String!]
+}
+
+input CreateUserInput {
+  username: String!
+  email: String!
+  password: String!
+  firstName: String!
+  lastName: String!
+  skills: [String!]!
+  bio: String
+  educationLevel: String
+  yearsExperience: Int!
+  preferredRole: String
+  githubUrl: String
+  linkedInUrl: String
+  portfolioUrl: String
+  timeZone: String
+  availableHours: String
+  certifications: [String!]
+  languages: [String!]
+  projectPreferences: [String!]
+}
+
+input ProjectFilterInput {
+  category: String
+  status: ProjectStatus
+  technology: String
+  minOpenPositions: Int
+  maxOpenPositions: Int
+  timeCommitment: String
+}
+
+input CreateTaskInput {
+  title: String!
+  description: String
+  status: TaskStatus = TODO
+  priority: TaskPriority!
+  dueDate: DateTime
+  projectId: ID!
+  assigneeId: ID
+}
+
+input UpdateTaskInput {
+  title: String
+  description: String
+  status: TaskStatus
+  priority: TaskPriority
+  dueDate: DateTime
+  assigneeId: ID
+}
+
+input CreateTeamInput {
+  name: String!
+  description: String
+  projectId: ID!
+}
+
+input UpdateTeamInput {
+  name: String
+  description: String
 }
