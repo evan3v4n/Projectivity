@@ -11,6 +11,8 @@ import (
 	"github.com/evan3v4n/Projectivity/backend/go/internal/auth"
 	"github.com/evan3v4n/Projectivity/backend/go/internal/database"
 	"github.com/evan3v4n/Projectivity/backend/go/internal/services"
+	"github.com/go-chi/chi"
+	"github.com/rs/cors"
 )
 
 const defaultPort = "8080"
@@ -50,16 +52,31 @@ func main() {
 		TeamService:    teamService,
 	}
 
+	// Create a new router
+	router := chi.NewRouter()
+
+	// Setup CORS
+	corsMiddleware := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000"}, // Add your frontend URL here
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowCredentials: true,
+	})
+	router.Use(corsMiddleware.Handler)
+
+	// Create GraphQL handler
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", auth.AuthMiddleware(srv))
+	// Setup routes
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", auth.AuthMiddleware(srv))
 
+	// Get port from environment variable or use default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Printf("Connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
