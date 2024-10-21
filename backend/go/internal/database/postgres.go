@@ -21,15 +21,15 @@ type Config struct {
 	SSLMode  string
 }
 
-// Sets up the databse connection
-func Initialize(config Config) error {
+// Initialize sets up the database connection
+func Initialize(config Config) (*sql.DB, error) {
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", config.Host, config.Port, config.User, config.Password, config.DBName, config.SSLMode)
 
 	var err error
 	DB, err = sql.Open("postgres", connStr)
 
 	if err != nil {
-		return fmt.Errorf("failed to open database: %v", err)
+		return nil, fmt.Errorf("failed to open database: %v", err)
 	}
 
 	DB.SetMaxOpenConns(25)
@@ -40,11 +40,11 @@ func Initialize(config Config) error {
 	defer cancel()
 
 	if err := DB.PingContext(ctx); err != nil {
-		return fmt.Errorf("failed to connect to database: %v", err)
+		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	log.Println("Connected to databse")
-	return nil
+	log.Println("Connected to database")
+	return DB, nil
 }
 
 func Close() {

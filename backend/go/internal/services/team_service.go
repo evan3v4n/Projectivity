@@ -11,10 +11,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type TeamService struct{}
+type TeamService struct {
+	DB *sql.DB
+}
 
-func NewTeamService() *TeamService {
-	return &TeamService{}
+func NewTeamService(db *sql.DB) *TeamService {
+	return &TeamService{
+		DB: db,
+	}
 }
 
 func (s *TeamService) CreateTeam(ctx context.Context, input model.CreateTeamInput) (*model.Team, error) {

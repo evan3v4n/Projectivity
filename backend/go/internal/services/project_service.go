@@ -14,11 +14,13 @@ import (
 )
 
 type ProjectService struct {
+	DB          *sql.DB
 	UserService *UserService
 }
 
-func NewProjectService(userService *UserService) *ProjectService {
+func NewProjectService(db *sql.DB, userService *UserService) *ProjectService {
 	return &ProjectService{
+		DB:          db,
 		UserService: userService,
 	}
 }

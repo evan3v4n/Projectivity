@@ -3,13 +3,12 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/99designs/gqlgen/codegen/testserver/nullabledirectives/generated"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/evan3v4n/Projectivity/backend/go/graph"
 	"github.com/evan3v4n/Projectivity/backend/go/internal/database"
+	"github.com/evan3v4n/Projectivity/backend/go/internal/services"
 )
 
 const defaultPort = "8080"
@@ -25,25 +24,32 @@ func main() {
 		SSLMode:  "disable",
 	}
 
-	if err := database.Initialize(dbConfig); err != nil {
+	db, err := database.Initialize(dbConfig)
+	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
+	defer db.Close()
 
-	defer database.Close()
+	// Initialize services
+	userService := services.NewUserService(db)
+	taskService := services.NewTaskService(db)
+	teamService := services.NewTeamService(db)
+	projectService := services.NewProjectService(db, userService)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
+	// Create resolver with services
+	resolver := &graph.Resolver{
+		ProjectService: projectService,
+		UserService:    userService,
+		TaskService:    taskService,
+		TeamService:    teamService,
 	}
 
-	resolver := &graph.Resolver{}
-
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Printf("connect to http://localhost:%s/ for GraphQL playground", defaultPort)
+	log.Fatal(http.ListenAndServe(":"+defaultPort, nil))
 
 }
