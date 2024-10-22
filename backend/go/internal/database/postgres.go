@@ -88,3 +88,82 @@ func QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
 func Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	return DB.QueryContext(ctx, query, args...)
 }
+
+// JoinProject adds a user to a project and decreases the open positions
+func JoinProject(ctx context.Context, projectID, userID string) error {
+	return Transaction(ctx, func(tx *sql.Tx) error {
+		// Check if the project exists and has open positions
+		var openPositions int
+		err := tx.QueryRowContext(ctx, "SELECT open_positions FROM projects WHERE id = $1", projectID).Scan(&openPositions)
+		if err != nil {
+			return fmt.Errorf("failed to get project: %v", err)
+		}
+		if openPositions <= 0 {
+			return fmt.Errorf("no open positions available")
+		}
+
+		// Check if the user is already a member
+		var count int
+		err = tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM team_members WHERE project_id = $1 AND user_id = $2", projectID, userID).Scan(&count)
+		if err != nil {
+			return fmt.Errorf("failed to check team membership: %v", err)
+		}
+		if count > 0 {
+			return fmt.Errorf("user is already a team member")
+		}
+
+		// Add the user to the team
+		_, err = tx.ExecContext(ctx, "INSERT INTO team_members (project_id, user_id, role) VALUES ($1, $2, $3)", projectID, userID, "Member")
+		if err != nil {
+			return fmt.Errorf("failed to add team member: %v", err)
+		}
+
+		// Decrease open positions
+		_, err = tx.ExecContext(ctx, "UPDATE projects SET open_positions = open_positions - 1 WHERE id = $1", projectID)
+		if err != nil {
+			return fmt.Errorf("failed to update open positions: %v", err)
+		}
+
+		return nil
+	})
+}
+
+// RequestToJoinProject creates a new join request for a project
+func RequestToJoinProject(ctx context.Context, projectID, userID string) error {
+	log.Printf("Executing RequestToJoinProject for user %s to project %s", userID, projectID)
+
+	return Transaction(ctx, func(tx *sql.Tx) error {
+		// Check if the project exists
+		var exists bool
+		err := tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1)", projectID).Scan(&exists)
+		if err != nil {
+			log.Printf("Error checking project existence: %v", err)
+			return fmt.Errorf("failed to check project existence: %v", err)
+		}
+		if !exists {
+			log.Printf("Project %s not found", projectID)
+			return fmt.Errorf("project not found")
+		}
+
+		// Check if a request already exists
+		err = tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM join_requests WHERE project_id = $1 AND user_id = $2)", projectID, userID).Scan(&exists)
+		if err != nil {
+			log.Printf("Error checking existing request: %v", err)
+			return fmt.Errorf("failed to check existing request: %v", err)
+		}
+		if exists {
+			log.Printf("Join request already exists for user %s to project %s", userID, projectID)
+			return fmt.Errorf("join request already exists")
+		}
+
+		// Create the join request
+		_, err = tx.ExecContext(ctx, "INSERT INTO join_requests (project_id, user_id, status) VALUES ($1, $2, $3)", projectID, userID, "PENDING")
+		if err != nil {
+			log.Printf("Error creating join request: %v", err)
+			return fmt.Errorf("failed to create join request: %v", err)
+		}
+
+		log.Printf("Join request created successfully in database")
+		return nil
+	})
+}

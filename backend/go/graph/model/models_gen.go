@@ -63,6 +63,14 @@ type CreateUserInput struct {
 	ProjectPreferences []string `json:"projectPreferences,omitempty"`
 }
 
+type JoinRequest struct {
+	ID        string            `json:"id"`
+	User      *User             `json:"user"`
+	Project   *Project          `json:"project"`
+	Status    JoinRequestStatus `json:"status"`
+	CreatedAt string            `json:"createdAt"`
+}
+
 type Mutation struct {
 }
 
@@ -203,6 +211,49 @@ type User struct {
 	JoinedAt           string     `json:"joinedAt"`
 	CreatedAt          string     `json:"createdAt"`
 	UpdatedAt          string     `json:"updatedAt"`
+}
+
+type JoinRequestStatus string
+
+const (
+	JoinRequestStatusPending  JoinRequestStatus = "PENDING"
+	JoinRequestStatusApproved JoinRequestStatus = "APPROVED"
+	JoinRequestStatusRejected JoinRequestStatus = "REJECTED"
+)
+
+var AllJoinRequestStatus = []JoinRequestStatus{
+	JoinRequestStatusPending,
+	JoinRequestStatusApproved,
+	JoinRequestStatusRejected,
+}
+
+func (e JoinRequestStatus) IsValid() bool {
+	switch e {
+	case JoinRequestStatusPending, JoinRequestStatusApproved, JoinRequestStatusRejected:
+		return true
+	}
+	return false
+}
+
+func (e JoinRequestStatus) String() string {
+	return string(e)
+}
+
+func (e *JoinRequestStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = JoinRequestStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid JoinRequestStatus", str)
+	}
+	return nil
+}
+
+func (e JoinRequestStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type ProjectStatus string

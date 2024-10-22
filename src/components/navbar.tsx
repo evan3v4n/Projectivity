@@ -42,7 +42,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 text-xl">
             <Logo/>
             <span className="hidden font-bold sm:inline-block">Projectivity</span>
           </Link>
@@ -54,16 +54,6 @@ const Navbar = () => {
           <NavItem href="/projects/create">Create Project</NavItem>
         </div>
         <div className="flex items-center space-x-4">
-          <form onSubmit={(e) => e.preventDefault()} className="hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search projects..."
-                className="pl-8 w-[200px] lg:w-[300px]"
-              />
-            </div>
-          </form>
           {user ? (
             <>
               <Button
@@ -79,43 +69,30 @@ const Navbar = () => {
               <Button variant="outline" onClick={logout}>Log Out</Button>
             </>
           ) : (
-            <>
-              {/* <Button variant="ghost" asChild>
-                <Link href="/auth">Log In</Link>
-              </Button> */}
-              <Button asChild>
-                <Link href="/auth">Log In / Sign Up</Link>
-              </Button>
-            </>
+            <Button asChild>
+              <Link href="/auth">Log In / Sign Up</Link>
+            </Button>
           )}
-          <Button
-            className="md:hidden"
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </Button>
+          <Link href="/dashboard">
+            <Button
+              className="md:hidden"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </Button>
+          </Link>
         </div>
       </div>
       {isMenuOpen && (
         <div className="fixed inset-0 top-16 z-50 bg-background md:hidden">
           <div className="container grid gap-6 p-6">
-            <form onSubmit={(e) => e.preventDefault()}>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search projects..."
-                  className="pl-8 w-full"
-                />
-              </div>
-            </form>
             <nav className="grid gap-4">
               <NavItem href="/dashboard">Dashboard</NavItem>
               <NavItem href="/projects/my-projects">My Projects</NavItem>

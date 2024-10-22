@@ -123,6 +123,8 @@ type Query {
   
   team(id: ID!): Team
   teamsByProject(projectId: ID!): [Team!]!
+
+  joinRequests(projectId: ID!): [JoinRequest!]!
 }
 
 type Mutation {
@@ -158,6 +160,22 @@ type Mutation {
   loginUser(email: String!, password: String!): AuthPayload!
   logoutUser: Boolean!
 
+  joinProject(projectId: ID!): Project!
+  requestToJoinProject(projectId: ID!): JoinRequest!
+}
+
+type JoinRequest {
+  id: ID!
+  user: User!
+  project: Project!
+  status: JoinRequestStatus!
+  createdAt: DateTime!
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 input CreateProjectInput {
@@ -271,4 +289,3 @@ type AuthPayload {
   token: String!
   user: User!
 }
-

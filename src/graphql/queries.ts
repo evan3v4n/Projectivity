@@ -450,13 +450,16 @@ export const JOIN_PROJECT = gql`
   mutation JoinProject($projectId: ID!) {
     joinProject(projectId: $projectId) {
       id
+      title
       teamMembers {
         id
         user {
           id
           username
         }
+        role
       }
+      openPositions
     }
   }
 `;
@@ -466,50 +469,21 @@ export const REQUEST_TO_JOIN_PROJECT = gql`
     requestToJoinProject(projectId: $projectId) {
       id
       status
-    }
-  }
-`;
-
-// Add these at the end of the file
-
-export const ACCEPT_JOIN_REQUEST = gql`
-  mutation AcceptJoinRequest($requestId: ID!) {
-    acceptJoinRequest(requestId: $requestId) {
-      id
-      status
-      projectId
-      userId
-    }
-  }
-`;
-
-export const DENY_JOIN_REQUEST = gql`
-  mutation DenyJoinRequest($requestId: ID!) {
-    denyJoinRequest(requestId: $requestId) {
-      id
-      status
-      projectId
-      userId
+      user {
+        id
+        username
+      }
+      project {
+        id
+        title
+      }
+      createdAt
     }
   }
 `;
 
 export const GET_JOIN_REQUESTS = gql`
   query GetJoinRequests($projectId: ID!) {
-    joinRequests(projectId: $projectId) {
-      id
-      user {
-        id
-        username
-      }
-      status
-    }
-  }
-`;
-
-// Add this query to get join requests for a project
-export const GET_PROJECT_JOIN_REQUESTS = gql`
-  query GetProjectJoinRequests($projectId: ID!) {
     joinRequests(projectId: $projectId) {
       id
       status
@@ -522,12 +496,23 @@ export const GET_PROJECT_JOIN_REQUESTS = gql`
   }
 `;
 
-// Add this mutation to check if the current user has a pending join request
-export const CHECK_JOIN_REQUEST = gql`
-  mutation CheckJoinRequest($projectId: ID!) {
-    checkJoinRequest(projectId: $projectId) {
-      exists
+export const APPROVE_JOIN_REQUEST = gql`
+  mutation ApproveJoinRequest($requestId: ID!) {
+    approveJoinRequest(requestId: $requestId) {
+      id
       status
     }
   }
 `;
+
+export const REJECT_JOIN_REQUEST = gql`
+  mutation RejectJoinRequest($requestId: ID!) {
+    rejectJoinRequest(requestId: $requestId) {
+      id
+      status
+    }
+  }
+`;
+
+// Add these at the end of the file
+

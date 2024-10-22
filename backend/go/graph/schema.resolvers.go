@@ -203,6 +203,37 @@ func (r *mutationResolver) LogoutUser(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
+// JoinProject is the resolver for the joinProject field.
+func (r *mutationResolver) JoinProject(ctx context.Context, projectID string) (*model.Project, error) {
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unauthorized: %w", err)
+	}
+
+	return r.ProjectService.JoinProject(ctx, projectID, userID)
+}
+
+// RequestToJoinProject is the resolver for the requestToJoinProject field.
+func (r *mutationResolver) RequestToJoinProject(ctx context.Context, projectID string) (*model.JoinRequest, error) {
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		log.Printf("Error getting user ID from context: %v", err)
+		return nil, fmt.Errorf("unauthorized: %w", err)
+	}
+
+	log.Printf("Attempting to create join request for user %s to project %s", userID, projectID)
+
+	joinRequest, err := r.JoinRequestService.CreateJoinRequest(ctx, projectID, userID)
+	if err != nil {
+		log.Printf("Error creating join request: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Successfully created join request: %+v", joinRequest)
+
+	return joinRequest, nil
+}
+
 // Project is the resolver for the project field.
 func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project, error) {
 	return r.ProjectService.GetProjectByID(ctx, id)
@@ -286,6 +317,11 @@ func (r *queryResolver) Team(ctx context.Context, id string) (*model.Team, error
 // TeamsByProject is the resolver for the teamsByProject field.
 func (r *queryResolver) TeamsByProject(ctx context.Context, projectID string) ([]*model.Team, error) {
 	return r.TeamService.GetTeamsByProject(ctx, projectID)
+}
+
+// JoinRequests is the resolver for the joinRequests field.
+func (r *queryResolver) JoinRequests(ctx context.Context, projectID string) ([]*model.JoinRequest, error) {
+	return r.JoinRequestService.GetJoinRequestsByProject(ctx, projectID)
 }
 
 // // Mutation returns MutationResolver implementation.

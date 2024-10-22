@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery, useMutation } from '@apollo/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Star, Clock, Users, ChevronLeft, Share2, Edit, Trash, Plus, X, Calendar, Search } from 'lucide-react'
-import { GET_PROJECT, UPDATE_PROJECT, DELETE_PROJECT } from '@/graphql/queries'
+import { GET_PROJECT, UPDATE_PROJECT, DELETE_PROJECT, JOIN_PROJECT, REQUEST_TO_JOIN_PROJECT, GET_JOIN_REQUESTS } from '@/graphql/queries'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
@@ -21,9 +21,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { AnimatePresence, motion } from "framer-motion"
 import { PROJECT_CATEGORIES } from '@/constants/project';
+import {JoinRequestsManager} from '@/components/JoinRequestsManager';
+
+
+
 const categories = [...PROJECT_CATEGORIES];
 // Add this at the top of your file
 const categoryTechnologies = {
@@ -81,10 +83,26 @@ export default function ProjectShowcase() {
   })
   const [customTech, setCustomTech] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [joinRequests, setJoinRequests] = useState([])
 
   const { loading, error, data, refetch } = useQuery(GET_PROJECT, {
     variables: { id: projectId },
   })
+
+  const hasOpenPositions = useMemo(() => {
+    return data?.project?.openPositions > 0
+  }, [data])
+
+  const isOwner = useMemo(() => {
+    if (data?.project && user) {
+      return data.project.owner.id === user.id
+    }
+    return false
+  }, [data, user])
+
+  const isUserMember = useMemo(() => {
+    return data?.project?.teamMembers.some(member => member.user.id === user?.id) || false
+  }, [data, user])
 
   const [updateProject] = useMutation(UPDATE_PROJECT, {
     onCompleted: () => {
@@ -120,6 +138,53 @@ export default function ProjectShowcase() {
       })
     }
   })
+
+  const [joinProject] = useMutation(REQUEST_TO_JOIN_PROJECT, {
+    onCompleted: () => {
+      refetch()
+      toast({
+        title: "Joined project",
+        description: "You have successfully joined the project.",
+      })
+    },
+    onError: (error) => {
+      console.error("Error joining project:", error)
+      toast({
+        title: "Error",
+        description: `Failed to join project: ${error.message}`,
+        variant: "destructive",
+      })
+    }
+  })
+
+  const [requestToJoinProject] = useMutation(REQUEST_TO_JOIN_PROJECT, {
+    onCompleted: () => {
+      toast({
+        title: "Request sent",
+        description: "Your request to join the project has been sent.",
+      })
+      refetch()
+    },
+    onError: (error) => {
+      console.error("Error sending join request:", error)
+      toast({
+        title: "Error",
+        description: `Failed to send join request: ${error.message}`,
+        variant: "destructive",
+      })
+    }
+  })
+
+  const { data: joinRequestsData, refetch: refetchJoinRequests } = useQuery(GET_JOIN_REQUESTS, {
+    variables: { projectId },
+    skip: !isOwner, // Now this is safe to use
+  })
+
+  useEffect(() => {
+    if (joinRequestsData) {
+      setJoinRequests(joinRequestsData.joinRequests)
+    }
+  }, [joinRequestsData])
 
   const handleEditClick = useCallback(() => {
     if (data && data.project) {
@@ -216,11 +281,49 @@ export default function ProjectShowcase() {
     });
   }, []);
 
+  const handleJoinOrRequestToJoin = useCallback(async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to join or request to join a project.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      if (hasOpenPositions) {
+        await joinProject({
+          variables: { projectId }
+        })
+        toast({
+          title: "Success",
+          description: "You have joined the project.",
+        })
+      } else {
+        await requestToJoinProject({
+          variables: { projectId }
+        })
+        toast({
+          title: "Request sent",
+          description: "Your request to join the project has been sent.",
+        })
+      }
+      refetch()
+    } catch (error) {
+      console.error("Error joining or requesting to join project:", error)
+      toast({
+        title: "Error",
+        description: "Failed to join or request to join the project. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }, [user, hasOpenPositions, projectId, joinProject, requestToJoinProject, refetch])
+
   if (loading) return <p>Loading...</p>
   if (error) return <p>Error: {error.message}</p>
 
   const project = data.project
-  const isOwner = user && project.owner.id === user.id
 
   return (
     <main className="container mx-auto px-4 py-8 bg-gray-50 dark:bg-gray-900">
@@ -364,9 +467,24 @@ export default function ProjectShowcase() {
                     <Trash className="mr-2 h-4 w-4" />
                     Delete Project
                   </Button>
+                  {joinRequests.length > 0 && (
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowJoinRequests(true)}>
+                      View Join Requests ({joinRequests.length})
+                    </Button>
+                  )}
                 </>
+              ) : isUserMember ? (
+                <Button disabled className="w-full bg-gray-400 text-white cursor-not-allowed">
+                  Already a Member
+                </Button>
+              ) : hasOpenPositions ? (
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" onClick={handleJoinOrRequestToJoin}>
+                  Join Project
+                </Button>
               ) : (
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">Join Project</Button>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={handleJoinOrRequestToJoin}>
+                  Request to Join
+                </Button>
               )}
               <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800" onClick={handleShareProject}>
                 <Share2 className="mr-2 h-4 w-4" />
@@ -586,6 +704,14 @@ export default function ProjectShowcase() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {isOwner && (
+        <JoinRequestsManager
+          projectId={projectId}
+          joinRequests={joinRequests}
+          refetchJoinRequests={refetchJoinRequests}
+        />
+      )}
     </main>
   )
 }

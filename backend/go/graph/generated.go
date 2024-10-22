@@ -52,28 +52,38 @@ type ComplexityRoot struct {
 		User  func(childComplexity int) int
 	}
 
+	JoinRequest struct {
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Project   func(childComplexity int) int
+		Status    func(childComplexity int) int
+		User      func(childComplexity int) int
+	}
+
 	Mutation struct {
-		AddTechnology    func(childComplexity int, projectID string, technology string) int
-		AssignTask       func(childComplexity int, taskID string, userID string) int
-		ChangePassword   func(childComplexity int, id string, oldPassword string, newPassword string) int
-		CreateProject    func(childComplexity int, input model.CreateProjectInput) int
-		CreateTask       func(childComplexity int, input model.CreateTaskInput) int
-		CreateTeam       func(childComplexity int, input model.CreateTeamInput) int
-		CreateUser       func(childComplexity int, input model.CreateUserInput) int
-		DeleteProject    func(childComplexity int, id string) int
-		DeleteTask       func(childComplexity int, id string) int
-		DeleteTeam       func(childComplexity int, id string) int
-		JoinTeam         func(childComplexity int, teamID string, role string) int
-		LeaveTeam        func(childComplexity int, teamID string) int
-		LoginUser        func(childComplexity int, email string, password string) int
-		LogoutUser       func(childComplexity int) int
-		RemoveTechnology func(childComplexity int, projectID string, technology string) int
-		UnassignTask     func(childComplexity int, taskID string) int
-		UpdateProject    func(childComplexity int, id string, input model.UpdateProjectInput) int
-		UpdateTask       func(childComplexity int, id string, input model.UpdateTaskInput) int
-		UpdateTaskStatus func(childComplexity int, taskID string, status model.TaskStatus) int
-		UpdateTeam       func(childComplexity int, id string, input model.UpdateTeamInput) int
-		UpdateUser       func(childComplexity int, id string, input model.UpdateUserInput) int
+		AddTechnology        func(childComplexity int, projectID string, technology string) int
+		AssignTask           func(childComplexity int, taskID string, userID string) int
+		ChangePassword       func(childComplexity int, id string, oldPassword string, newPassword string) int
+		CreateProject        func(childComplexity int, input model.CreateProjectInput) int
+		CreateTask           func(childComplexity int, input model.CreateTaskInput) int
+		CreateTeam           func(childComplexity int, input model.CreateTeamInput) int
+		CreateUser           func(childComplexity int, input model.CreateUserInput) int
+		DeleteProject        func(childComplexity int, id string) int
+		DeleteTask           func(childComplexity int, id string) int
+		DeleteTeam           func(childComplexity int, id string) int
+		JoinProject          func(childComplexity int, projectID string) int
+		JoinTeam             func(childComplexity int, teamID string, role string) int
+		LeaveTeam            func(childComplexity int, teamID string) int
+		LoginUser            func(childComplexity int, email string, password string) int
+		LogoutUser           func(childComplexity int) int
+		RemoveTechnology     func(childComplexity int, projectID string, technology string) int
+		RequestToJoinProject func(childComplexity int, projectID string) int
+		UnassignTask         func(childComplexity int, taskID string) int
+		UpdateProject        func(childComplexity int, id string, input model.UpdateProjectInput) int
+		UpdateTask           func(childComplexity int, id string, input model.UpdateTaskInput) int
+		UpdateTaskStatus     func(childComplexity int, taskID string, status model.TaskStatus) int
+		UpdateTeam           func(childComplexity int, id string, input model.UpdateTeamInput) int
+		UpdateUser           func(childComplexity int, id string, input model.UpdateUserInput) int
 	}
 
 	Project struct {
@@ -96,6 +106,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		JoinRequests   func(childComplexity int, projectID string) int
 		Project        func(childComplexity int, id string) int
 		Projects       func(childComplexity int, category *string, status *model.ProjectStatus, technology *string, limit *int, offset *int) int
 		SearchProjects func(childComplexity int, query string) int
@@ -191,6 +202,8 @@ type MutationResolver interface {
 	DeleteTeam(ctx context.Context, id string) (bool, error)
 	LoginUser(ctx context.Context, email string, password string) (*model.AuthPayload, error)
 	LogoutUser(ctx context.Context) (bool, error)
+	JoinProject(ctx context.Context, projectID string) (*model.Project, error)
+	RequestToJoinProject(ctx context.Context, projectID string) (*model.JoinRequest, error)
 }
 type QueryResolver interface {
 	Project(ctx context.Context, id string) (*model.Project, error)
@@ -203,6 +216,7 @@ type QueryResolver interface {
 	UserTasks(ctx context.Context, userID string, status *model.TaskStatus, limit *int, offset *int) ([]*model.Task, error)
 	Team(ctx context.Context, id string) (*model.Team, error)
 	TeamsByProject(ctx context.Context, projectID string) ([]*model.Team, error)
+	JoinRequests(ctx context.Context, projectID string) ([]*model.JoinRequest, error)
 }
 
 type executableSchema struct {
@@ -237,6 +251,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AuthPayload.User(childComplexity), true
+
+	case "JoinRequest.createdAt":
+		if e.complexity.JoinRequest.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.JoinRequest.CreatedAt(childComplexity), true
+
+	case "JoinRequest.id":
+		if e.complexity.JoinRequest.ID == nil {
+			break
+		}
+
+		return e.complexity.JoinRequest.ID(childComplexity), true
+
+	case "JoinRequest.project":
+		if e.complexity.JoinRequest.Project == nil {
+			break
+		}
+
+		return e.complexity.JoinRequest.Project(childComplexity), true
+
+	case "JoinRequest.status":
+		if e.complexity.JoinRequest.Status == nil {
+			break
+		}
+
+		return e.complexity.JoinRequest.Status(childComplexity), true
+
+	case "JoinRequest.user":
+		if e.complexity.JoinRequest.User == nil {
+			break
+		}
+
+		return e.complexity.JoinRequest.User(childComplexity), true
 
 	case "Mutation.addTechnology":
 		if e.complexity.Mutation.AddTechnology == nil {
@@ -358,6 +407,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteTeam(childComplexity, args["id"].(string)), true
 
+	case "Mutation.joinProject":
+		if e.complexity.Mutation.JoinProject == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_joinProject_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.JoinProject(childComplexity, args["projectId"].(string)), true
+
 	case "Mutation.joinTeam":
 		if e.complexity.Mutation.JoinTeam == nil {
 			break
@@ -412,6 +473,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RemoveTechnology(childComplexity, args["projectId"].(string), args["technology"].(string)), true
+
+	case "Mutation.requestToJoinProject":
+		if e.complexity.Mutation.RequestToJoinProject == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_requestToJoinProject_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RequestToJoinProject(childComplexity, args["projectId"].(string)), true
 
 	case "Mutation.unassignTask":
 		if e.complexity.Mutation.UnassignTask == nil {
@@ -596,6 +669,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Project.UpdatedAt(childComplexity), true
+
+	case "Query.joinRequests":
+		if e.complexity.Query.JoinRequests == nil {
+			break
+		}
+
+		args, err := ec.field_Query_joinRequests_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.JoinRequests(childComplexity, args["projectId"].(string)), true
 
 	case "Query.project":
 		if e.complexity.Query.Project == nil {
@@ -1614,6 +1699,38 @@ func (ec *executionContext) field_Mutation_deleteTeam_argsID(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_joinProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_joinProject_argsProjectID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["projectId"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_joinProject_argsProjectID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["projectId"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+	if tmp, ok := rawArgs["projectId"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_joinTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1817,6 +1934,38 @@ func (ec *executionContext) field_Mutation_removeTechnology_argsTechnology(
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("technology"))
 	if tmp, ok := rawArgs["technology"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_requestToJoinProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Mutation_requestToJoinProject_argsProjectID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["projectId"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_requestToJoinProject_argsProjectID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["projectId"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+	if tmp, ok := rawArgs["projectId"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
 	}
 
 	var zeroVal string
@@ -2176,6 +2325,38 @@ func (ec *executionContext) field_Query___type_argsName(
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 	if tmp, ok := rawArgs["name"]; ok {
 		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_joinRequests_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Query_joinRequests_argsProjectID(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["projectId"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_joinRequests_argsProjectID(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["projectId"]
+	if !ok {
+		var zeroVal string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+	if tmp, ok := rawArgs["projectId"]; ok {
+		return ec.unmarshalNID2string(ctx, tmp)
 	}
 
 	var zeroVal string
@@ -3008,6 +3189,314 @@ func (ec *executionContext) fieldContext_AuthPayload_user(_ context.Context, fie
 				return ec.fieldContext_User_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JoinRequest_id(ctx context.Context, field graphql.CollectedField, obj *model.JoinRequest) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JoinRequest_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JoinRequest_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JoinRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JoinRequest_user(ctx context.Context, field graphql.CollectedField, obj *model.JoinRequest) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JoinRequest_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JoinRequest_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JoinRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "firstName":
+				return ec.fieldContext_User_firstName(ctx, field)
+			case "lastName":
+				return ec.fieldContext_User_lastName(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "profileImageUrl":
+				return ec.fieldContext_User_profileImageUrl(ctx, field)
+			case "skills":
+				return ec.fieldContext_User_skills(ctx, field)
+			case "educationLevel":
+				return ec.fieldContext_User_educationLevel(ctx, field)
+			case "yearsExperience":
+				return ec.fieldContext_User_yearsExperience(ctx, field)
+			case "preferredRole":
+				return ec.fieldContext_User_preferredRole(ctx, field)
+			case "githubUrl":
+				return ec.fieldContext_User_githubUrl(ctx, field)
+			case "linkedInUrl":
+				return ec.fieldContext_User_linkedInUrl(ctx, field)
+			case "portfolioUrl":
+				return ec.fieldContext_User_portfolioUrl(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
+			case "lastActive":
+				return ec.fieldContext_User_lastActive(ctx, field)
+			case "timeZone":
+				return ec.fieldContext_User_timeZone(ctx, field)
+			case "availableHours":
+				return ec.fieldContext_User_availableHours(ctx, field)
+			case "certifications":
+				return ec.fieldContext_User_certifications(ctx, field)
+			case "languages":
+				return ec.fieldContext_User_languages(ctx, field)
+			case "projectPreferences":
+				return ec.fieldContext_User_projectPreferences(ctx, field)
+			case "projects":
+				return ec.fieldContext_User_projects(ctx, field)
+			case "ownedProjects":
+				return ec.fieldContext_User_ownedProjects(ctx, field)
+			case "joinedAt":
+				return ec.fieldContext_User_joinedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JoinRequest_project(ctx context.Context, field graphql.CollectedField, obj *model.JoinRequest) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JoinRequest_project(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Project, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Project)
+	fc.Result = res
+	return ec.marshalNProject2ᚖgithubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JoinRequest_project(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JoinRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Project_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Project_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Project_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Project_category(ctx, field)
+			case "status":
+				return ec.fieldContext_Project_status(ctx, field)
+			case "technologies":
+				return ec.fieldContext_Project_technologies(ctx, field)
+			case "owner":
+				return ec.fieldContext_Project_owner(ctx, field)
+			case "openPositions":
+				return ec.fieldContext_Project_openPositions(ctx, field)
+			case "timeCommitment":
+				return ec.fieldContext_Project_timeCommitment(ctx, field)
+			case "popularity":
+				return ec.fieldContext_Project_popularity(ctx, field)
+			case "team":
+				return ec.fieldContext_Project_team(ctx, field)
+			case "teamMembers":
+				return ec.fieldContext_Project_teamMembers(ctx, field)
+			case "timeline":
+				return ec.fieldContext_Project_timeline(ctx, field)
+			case "learningObjectives":
+				return ec.fieldContext_Project_learningObjectives(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Project_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JoinRequest_status(ctx context.Context, field graphql.CollectedField, obj *model.JoinRequest) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JoinRequest_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.JoinRequestStatus)
+	fc.Result = res
+	return ec.marshalNJoinRequestStatus2githubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequestStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JoinRequest_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JoinRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type JoinRequestStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JoinRequest_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.JoinRequest) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JoinRequest_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JoinRequest_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JoinRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4611,6 +5100,162 @@ func (ec *executionContext) fieldContext_Mutation_logoutUser(_ context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_joinProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_joinProject(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().JoinProject(rctx, fc.Args["projectId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Project)
+	fc.Result = res
+	return ec.marshalNProject2ᚖgithubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_joinProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Project_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Project_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Project_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Project_category(ctx, field)
+			case "status":
+				return ec.fieldContext_Project_status(ctx, field)
+			case "technologies":
+				return ec.fieldContext_Project_technologies(ctx, field)
+			case "owner":
+				return ec.fieldContext_Project_owner(ctx, field)
+			case "openPositions":
+				return ec.fieldContext_Project_openPositions(ctx, field)
+			case "timeCommitment":
+				return ec.fieldContext_Project_timeCommitment(ctx, field)
+			case "popularity":
+				return ec.fieldContext_Project_popularity(ctx, field)
+			case "team":
+				return ec.fieldContext_Project_team(ctx, field)
+			case "teamMembers":
+				return ec.fieldContext_Project_teamMembers(ctx, field)
+			case "timeline":
+				return ec.fieldContext_Project_timeline(ctx, field)
+			case "learningObjectives":
+				return ec.fieldContext_Project_learningObjectives(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Project_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_joinProject_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_requestToJoinProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_requestToJoinProject(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RequestToJoinProject(rctx, fc.Args["projectId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.JoinRequest)
+	fc.Result = res
+	return ec.marshalNJoinRequest2ᚖgithubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequest(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_requestToJoinProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_JoinRequest_id(ctx, field)
+			case "user":
+				return ec.fieldContext_JoinRequest_user(ctx, field)
+			case "project":
+				return ec.fieldContext_JoinRequest_project(ctx, field)
+			case "status":
+				return ec.fieldContext_JoinRequest_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_JoinRequest_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JoinRequest", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_requestToJoinProject_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -6235,6 +6880,73 @@ func (ec *executionContext) fieldContext_Query_teamsByProject(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_teamsByProject_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_joinRequests(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_joinRequests(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().JoinRequests(rctx, fc.Args["projectId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.JoinRequest)
+	fc.Result = res
+	return ec.marshalNJoinRequest2ᚕᚖgithubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequestᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_joinRequests(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_JoinRequest_id(ctx, field)
+			case "user":
+				return ec.fieldContext_JoinRequest_user(ctx, field)
+			case "project":
+				return ec.fieldContext_JoinRequest_project(ctx, field)
+			case "status":
+				return ec.fieldContext_JoinRequest_status(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_JoinRequest_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JoinRequest", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_joinRequests_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11282,6 +11994,65 @@ func (ec *executionContext) _AuthPayload(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var joinRequestImplementors = []string{"JoinRequest"}
+
+func (ec *executionContext) _JoinRequest(ctx context.Context, sel ast.SelectionSet, obj *model.JoinRequest) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, joinRequestImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JoinRequest")
+		case "id":
+			out.Values[i] = ec._JoinRequest_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "user":
+			out.Values[i] = ec._JoinRequest_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "project":
+			out.Values[i] = ec._JoinRequest_project(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._JoinRequest_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._JoinRequest_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -11444,6 +12215,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "logoutUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_logoutUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "joinProject":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_joinProject(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requestToJoinProject":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_requestToJoinProject(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -11794,6 +12579,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_teamsByProject(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "joinRequests":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_joinRequests(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -12583,6 +13390,74 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNJoinRequest2githubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequest(ctx context.Context, sel ast.SelectionSet, v model.JoinRequest) graphql.Marshaler {
+	return ec._JoinRequest(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNJoinRequest2ᚕᚖgithubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequestᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.JoinRequest) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNJoinRequest2ᚖgithubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequest(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNJoinRequest2ᚖgithubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequest(ctx context.Context, sel ast.SelectionSet, v *model.JoinRequest) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JoinRequest(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNJoinRequestStatus2githubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequestStatus(ctx context.Context, v interface{}) (model.JoinRequestStatus, error) {
+	var res model.JoinRequestStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNJoinRequestStatus2githubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐJoinRequestStatus(ctx context.Context, sel ast.SelectionSet, v model.JoinRequestStatus) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNProject2githubᚗcomᚋevan3v4nᚋProjectivityᚋbackendᚋgoᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {

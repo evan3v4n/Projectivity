@@ -797,3 +797,15 @@ func (s *ProjectService) RemoveTechnology(ctx context.Context, projectID string,
 	// Fetch and return the updated project
 	return s.GetProjectByID(ctx, projectID)
 }
+
+// Add this method to the ProjectService struct
+
+func (s *ProjectService) JoinProject(ctx context.Context, projectID, userID string) (*model.Project, error) {
+	err := database.JoinProject(ctx, projectID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to join project: %w", err)
+	}
+
+	// Fetch and return the updated project
+	return s.GetProjectByID(ctx, projectID)
+}

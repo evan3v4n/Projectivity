@@ -43,13 +43,15 @@ func main() {
 	taskService := services.NewTaskService(db)
 	teamService := services.NewTeamService(db)
 	projectService := services.NewProjectService(db, userService)
+	joinRequestService := services.NewJoinRequestService(db)
 
 	// Create resolver with services
 	resolver := &graph.Resolver{
-		ProjectService: projectService,
-		UserService:    userService,
-		TaskService:    taskService,
-		TeamService:    teamService,
+		ProjectService:     projectService,
+		UserService:        userService,
+		TaskService:        taskService,
+		TeamService:        teamService,
+		JoinRequestService: joinRequestService,
 	}
 
 	// Create a new router
