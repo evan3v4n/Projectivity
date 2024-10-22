@@ -13,7 +13,7 @@ type Project {
   popularity: Int!
   team: Team
   teamMembers: [TeamMember!]!
-  timeline: String!
+  timeline: String
   learningObjectives: [String!]!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -157,6 +157,7 @@ type Mutation {
   
   loginUser(email: String!, password: String!): AuthPayload!
   logoutUser: Boolean!
+
 }
 
 input CreateProjectInput {
@@ -270,3 +271,4 @@ type AuthPayload {
   token: String!
   user: User!
 }
+

@@ -79,7 +79,7 @@ type Project struct {
 	Popularity         int           `json:"popularity"`
 	Team               *Team         `json:"team,omitempty"`
 	TeamMembers        []*TeamMember `json:"teamMembers"`
-	Timeline           string        `json:"timeline"`
+	Timeline           *string       `json:"timeline,omitempty"`
 	LearningObjectives []string      `json:"learningObjectives"`
 	CreatedAt          string        `json:"createdAt"`
 	UpdatedAt          string        `json:"updatedAt"`

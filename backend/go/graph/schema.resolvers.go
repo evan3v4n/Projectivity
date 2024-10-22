@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/evan3v4n/Projectivity/backend/go/graph/model"
 	"github.com/evan3v4n/Projectivity/backend/go/internal/auth"
@@ -25,13 +26,22 @@ func (r *mutationResolver) CreateProject(ctx context.Context, input model.Create
 
 // UpdateProject is the resolver for the updateProject field.
 func (r *mutationResolver) UpdateProject(ctx context.Context, id string, input model.UpdateProjectInput) (*model.Project, error) {
-	return r.ProjectService.UpdateProject(ctx, id, input)
+	updatedProject, err := r.ProjectService.UpdateProject(ctx, id, input)
+	if err != nil {
+		log.Printf("Error updating project: %v", err)
+		return nil, fmt.Errorf("failed to update project: %w", err)
+	}
+	return updatedProject, nil
 }
 
 // DeleteProject is the resolver for the deleteProject field.
 func (r *mutationResolver) DeleteProject(ctx context.Context, id string) (bool, error) {
 	err := r.ProjectService.DeleteProject(ctx, id)
-	return err == nil, err
+	if err != nil {
+		log.Printf("Error deleting project: %v", err)
+		return false, fmt.Errorf("failed to delete project: %w", err)
+	}
+	return true, nil
 }
 
 // JoinTeam is the resolver for the joinTeam field.
@@ -55,7 +65,17 @@ func (r *mutationResolver) LeaveTeam(ctx context.Context, teamID string) (bool, 
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, id string, input model.UpdateUserInput) (*model.User, error) {
-	return r.UserService.UpdateUser(ctx, id, input)
+	log.Printf("Attempting to update user with ID: %s", id)
+	log.Printf("Update input: %+v", input)
+
+	user, err := r.UserService.UpdateUser(ctx, id, input)
+	if err != nil {
+		log.Printf("Error updating user: %v", err)
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	log.Printf("User updated successfully: %+v", user)
+	return user, nil
 }
 
 // AddTechnology is the resolver for the addTechnology field.
@@ -190,16 +210,15 @@ func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project,
 
 // Projects is the resolver for the projects field.
 func (r *queryResolver) Projects(ctx context.Context, category *string, status *model.ProjectStatus, technology *string, limit *int, offset *int) ([]*model.Project, error) {
-	// Construct a search query based on the provided filters
-	query := ""
+	filters := make(map[string]interface{})
 	if category != nil {
-		query += *category + " "
+		filters["category"] = *category
 	}
 	if status != nil {
-		query += string(*status) + " "
+		filters["status"] = *status
 	}
 	if technology != nil {
-		query += *technology + " "
+		filters["technology"] = *technology
 	}
 
 	// Use default values if limit or offset are nil
@@ -212,7 +231,7 @@ func (r *queryResolver) Projects(ctx context.Context, category *string, status *
 		offsetVal = *offset
 	}
 
-	return r.ProjectService.SearchProjects(ctx, query, limitVal, offsetVal)
+	return r.ProjectService.ListProjects(ctx, filters, limitVal, offsetVal)
 }
 
 // User is the resolver for the user field.

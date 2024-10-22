@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/evan3v4n/Projectivity/backend/go/graph/model"
@@ -24,7 +25,6 @@ func NewUserService(db *sql.DB) *UserService {
 
 func (s *UserService) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
-	fmt.Println(hashedPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -114,9 +114,12 @@ func (s *UserService) GetUserByID(ctx context.Context, id string) (*model.User, 
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, id string, input model.UpdateUserInput) (*model.User, error) {
+	log.Printf("UserService: Updating user with ID: %s", id)
+
 	user, err := s.GetUserByID(ctx, id)
 	if err != nil {
-		return nil, err
+		log.Printf("UserService: Error getting user by ID: %v", err)
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	// Update fields if provided in input
@@ -175,30 +178,39 @@ func (s *UserService) UpdateUser(ctx context.Context, id string, input model.Upd
 		user.ProjectPreferences = input.ProjectPreferences
 	}
 
-	user.UpdatedAt = time.Now().Format(time.RFC3339)
+	log.Printf("UserService: User after applying updates: %+v", user)
 
-	err = database.Transaction(ctx, func(tx *sql.Tx) error {
-		query := `
-			UPDATE users
-			SET username = $1, email = $2, first_name = $3, last_name = $4, bio = $5, profile_image_url = $6,
-				skills = $7, education_level = $8, years_experience = $9, preferred_role = $10, github_url = $11,
-				linkedin_url = $12, portfolio_url = $13, time_zone = $14, available_hours = $15, certifications = $16,
-				languages = $17, project_preferences = $18, updated_at = $19
-			WHERE id = $20
-		`
-		_, err := tx.ExecContext(ctx, query,
-			user.Username, user.Email, user.FirstName, user.LastName, user.Bio, user.ProfileImageURL,
-			user.Skills, user.EducationLevel, user.YearsExperience, user.PreferredRole, user.GithubURL,
-			user.LinkedInURL, user.PortfolioURL, user.TimeZone, user.AvailableHours, user.Certifications,
-			user.Languages, user.ProjectPreferences, user.UpdatedAt, user.ID,
-		)
-		return err
-	})
-
-	if err != nil {
-		return nil, err
+	// Perform validation
+	if err := validateUser(user); err != nil {
+		log.Printf("UserService: User validation failed: %v", err)
+		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
+	// Update in database
+	query := `
+		UPDATE users 
+		SET username = $1, email = $2, first_name = $3, last_name = $4, 
+			bio = $5, profile_image_url = $6, skills = $7, education_level = $8, 
+			years_experience = $9, preferred_role = $10, github_url = $11, 
+			linkedin_url = $12, portfolio_url = $13, time_zone = $14, 
+			available_hours = $15, certifications = $16, languages = $17, 
+			project_preferences = $18, updated_at = $19
+		WHERE id = $20
+	`
+	_, err = s.DB.ExecContext(ctx, query,
+		user.Username, user.Email, user.FirstName, user.LastName,
+		user.Bio, user.ProfileImageURL, pq.Array(user.Skills), user.EducationLevel,
+		user.YearsExperience, user.PreferredRole, user.GithubURL,
+		user.LinkedInURL, user.PortfolioURL, user.TimeZone,
+		user.AvailableHours, pq.Array(user.Certifications), pq.Array(user.Languages),
+		pq.Array(user.ProjectPreferences), time.Now(), id)
+
+	if err != nil {
+		log.Printf("UserService: Error updating user in database: %v", err)
+		return nil, fmt.Errorf("failed to update user in database: %w", err)
+	}
+
+	log.Printf("UserService: User updated successfully")
 	return user, nil
 }
 
@@ -564,3 +576,20 @@ func (s *UserService) LogoutUser(ctx context.Context, userID string) error {
 
 // 	return result
 // }
+
+func validateUser(user *model.User) error {
+	if user.Username == "" {
+		return errors.New("username cannot be empty")
+	}
+	if user.Email == "" {
+		return errors.New("email cannot be empty")
+	}
+	if user.FirstName == "" {
+		return errors.New("first name cannot be empty")
+	}
+	if user.LastName == "" {
+		return errors.New("last name cannot be empty")
+	}
+	// Add more validation rules as needed
+	return nil
+}

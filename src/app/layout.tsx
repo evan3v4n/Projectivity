@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/navbar"
+import dynamic from 'next/dynamic';
 import Footer from "@/components/footer";
+import { ToastProvider, ToastViewport } from "@/components/ui/toast";
+// Dynamically import client components
+const AuthProviderWrapper = dynamic(() => import("@/components/AuthProviderWrapper"), { ssr: false });
+const Navbar = dynamic(() => import("@/components/navbar"), { ssr: false });
+const ApolloProviderWrapper = dynamic(() => import("@/components/ApolloProviderWrapper"), { ssr: false });
 
 export const metadata: Metadata = {
   title: "Projectivity",
@@ -16,11 +21,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <Navbar/>
-        <div className="flex flex-col min-h-screen">
-          <div className="flex-grow">{children}</div>
-          <Footer />
-        </div>
+        <AuthProviderWrapper>
+          <ApolloProviderWrapper>
+            <Navbar/>
+            <div className="flex flex-col min-h-screen">
+              <div className="flex-grow">
+                <ToastProvider >
+                  {children}
+                  <ToastViewport />
+                </ToastProvider>
+              </div>
+              <Footer />
+            </div>
+          </ApolloProviderWrapper>
+        </AuthProviderWrapper>
       </body>
     </html>
   );

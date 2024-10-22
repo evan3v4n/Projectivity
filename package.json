@@ -10,6 +10,7 @@
     "shadcn": "shadcn-ui"
   },
   "dependencies": {
+    "@apollo/client": "^3.11.8",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -26,7 +27,7 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-switch": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
-    "@radix-ui/react-toast": "^1.2.1",
+    "@radix-ui/react-toast": "^1.2.2",
     "@radix-ui/react-tooltip": "^1.1.2",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.0",
@@ -35,6 +36,7 @@
     "date-fns": "^3.6.0",
     "firebase": "^10.13.2",
     "framer-motion": "^11.9.0",
+    "graphql": "^16.9.0",
     "lucide-react": "^0.441.0",
     "next": "14.2.12",
     "next-themes": "^0.3.0",

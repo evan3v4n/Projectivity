@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -37,8 +36,8 @@ func (s *ProjectService) CreateProject(ctx context.Context, input model.CreatePr
 		TimeCommitment:     input.TimeCommitment,
 		LearningObjectives: input.LearningObjectives,
 		Popularity:         0,
-		Timeline:           "",                    // You might want to set a default value or add it to the input
-		TeamMembers:        []*model.TeamMember{}, // Initialize as an empty slice
+		Timeline:           nil, // Initialize as nil instead of empty string
+		TeamMembers:        []*model.TeamMember{},
 		CreatedAt:          time.Now().Format(time.RFC3339),
 		UpdatedAt:          time.Now().Format(time.RFC3339),
 	}
@@ -103,8 +102,9 @@ func (s *ProjectService) CreateProject(ctx context.Context, input model.CreatePr
 func (s *ProjectService) GetProjectByID(ctx context.Context, id string) (*model.Project, error) {
 	query := `
 		SELECT p.id, p.title, p.description, p.category, p.status, p.technologies, 
-			   p.open_positions, p.time_commitment, p.learning_objectives, p.popularity, 
-			   p.created_at, p.updated_at, u.id, u.username, u.email
+			   p.open_positions, p.time_commitment, p.popularity, p.timeline, 
+			   p.learning_objectives, p.created_at, p.updated_at,
+			   u.id, u.username
 		FROM projects p
 		JOIN project_owners po ON p.id = po.project_id
 		JOIN users u ON po.user_id = u.id
@@ -115,12 +115,14 @@ func (s *ProjectService) GetProjectByID(ctx context.Context, id string) (*model.
 	owner := &model.User{}
 
 	var technologies, learningObjectives []string
+	var timeline sql.NullString
 
 	err := database.QueryRow(ctx, query, id).Scan(
 		&project.ID, &project.Title, &project.Description, &project.Category, &project.Status,
 		pq.Array(&technologies), &project.OpenPositions, &project.TimeCommitment,
-		pq.Array(&learningObjectives), &project.Popularity, &project.CreatedAt, &project.UpdatedAt,
-		&owner.ID, &owner.Username, &owner.Email,
+		&project.Popularity, &timeline, pq.Array(&learningObjectives),
+		&project.CreatedAt, &project.UpdatedAt,
+		&owner.ID, &owner.Username,
 	)
 
 	if err != nil {
@@ -134,20 +136,9 @@ func (s *ProjectService) GetProjectByID(ctx context.Context, id string) (*model.
 	project.LearningObjectives = learningObjectives
 	project.Owner = owner
 
-	// Fetch the team for the project
-	teamQuery := `
-		SELECT t.id, t.name, t.description
-		FROM teams t
-		WHERE t.project_id = $1
-	`
-	team := &model.Team{}
-	err = database.QueryRow(ctx, teamQuery, id).Scan(
-		&team.ID, &team.Name, &team.Description,
-	)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, fmt.Errorf("error fetching team: %w", err)
+	if timeline.Valid {
+		project.Timeline = &timeline.String
 	}
-	project.Team = team
 
 	return project, nil
 }
@@ -212,17 +203,51 @@ func (s *ProjectService) UpdateProject(ctx context.Context, id string, input mod
 }
 
 func (s *ProjectService) DeleteProject(ctx context.Context, id string) error {
-	// Delete the project from the database
-	// Return an error if the operation fails
+	return database.Transaction(ctx, func(tx *sql.Tx) error {
+		// 1. Delete join requests for the project
+		_, err := tx.ExecContext(ctx, `DELETE FROM join_requests WHERE project_id = $1`, id)
+		if err != nil {
+			return fmt.Errorf("failed to delete join requests: %w", err)
+		}
 
-	query := `DELETE FROM projects WHERE id = $1`
+		// 2. Delete team members
+		_, err = tx.ExecContext(ctx, `
+			DELETE FROM team_members 
+			WHERE team_id IN (SELECT id FROM teams WHERE project_id = $1)
+		`, id)
+		if err != nil {
+			return fmt.Errorf("failed to delete team members: %w", err)
+		}
 
-	err := database.ExecuteQuery(ctx, query, id)
-	if err != nil {
-		return fmt.Errorf("failed to delete project: %w", err)
-	}
+		// 3. Delete teams
+		_, err = tx.ExecContext(ctx, `DELETE FROM teams WHERE project_id = $1`, id)
+		if err != nil {
+			return fmt.Errorf("failed to delete teams: %w", err)
+		}
 
-	return errors.New("not implemented")
+		// 4. Delete project owners
+		_, err = tx.ExecContext(ctx, `DELETE FROM project_owners WHERE project_id = $1`, id)
+		if err != nil {
+			return fmt.Errorf("failed to delete project owners: %w", err)
+		}
+
+		// 5. Finally, delete the project
+		result, err := tx.ExecContext(ctx, `DELETE FROM projects WHERE id = $1`, id)
+		if err != nil {
+			return fmt.Errorf("failed to delete project: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("error checking rows affected: %w", err)
+		}
+
+		if rowsAffected == 0 {
+			return fmt.Errorf("project not found")
+		}
+
+		return nil
+	})
 }
 
 func (s *ProjectService) ListProjects(ctx context.Context, filters map[string]interface{}, limit, offset int) ([]*model.Project, error) {
@@ -262,11 +287,12 @@ func (s *ProjectService) ListProjects(ctx context.Context, filters map[string]in
 		project := &model.Project{}
 		owner := &model.User{}
 		var technologies, learningObjectives []string
+		var timeline sql.NullString
 
 		err := rows.Scan(
 			&project.ID, &project.Title, &project.Description, &project.Category, &project.Status,
 			pq.Array(&technologies), &project.OpenPositions, &project.TimeCommitment,
-			pq.Array(&learningObjectives), &project.Popularity, &project.Timeline,
+			pq.Array(&learningObjectives), &project.Popularity, &timeline,
 			&project.CreatedAt, &project.UpdatedAt,
 			&owner.ID, &owner.Username, &owner.Email,
 		)
@@ -277,6 +303,10 @@ func (s *ProjectService) ListProjects(ctx context.Context, filters map[string]in
 		project.Technologies = technologies
 		project.LearningObjectives = learningObjectives
 		project.Owner = owner
+
+		if timeline.Valid {
+			project.Timeline = &timeline.String
+		}
 
 		projects = append(projects, project)
 	}
@@ -484,11 +514,12 @@ func (s *ProjectService) SearchProjects(ctx context.Context, query string, limit
 			Owner: &model.User{},
 		}
 		var technologies, learningObjectives []string
+		var timeline sql.NullString
 
 		err := rows.Scan(
 			&project.ID, &project.Title, &project.Description, &project.Category, &project.Status,
 			pq.Array(&technologies), &project.OpenPositions, &project.TimeCommitment,
-			pq.Array(&learningObjectives), &project.Popularity, &project.Timeline,
+			pq.Array(&learningObjectives), &project.Popularity, &timeline,
 			&project.CreatedAt, &project.UpdatedAt,
 			&project.Owner.ID, &project.Owner.Username, &project.Owner.Email,
 		)
@@ -498,6 +529,10 @@ func (s *ProjectService) SearchProjects(ctx context.Context, query string, limit
 
 		project.Technologies = technologies
 		project.LearningObjectives = learningObjectives
+
+		if timeline.Valid {
+			project.Timeline = &timeline.String
+		}
 
 		projects = append(projects, project)
 	}
@@ -530,11 +565,12 @@ func (s *ProjectService) GetProjectsByOwner(ctx context.Context, ownerID string)
 	for rows.Next() {
 		project := &model.Project{}
 		var technologies, learningObjectives []string
+		var timeline sql.NullString
 
 		err := rows.Scan(
 			&project.ID, &project.Title, &project.Description, &project.Category, &project.Status,
 			pq.Array(&technologies), &project.OpenPositions, &project.TimeCommitment,
-			pq.Array(&learningObjectives), &project.Popularity, &project.Timeline,
+			pq.Array(&learningObjectives), &project.Popularity, &timeline,
 			&project.CreatedAt, &project.UpdatedAt,
 		)
 		if err != nil {
@@ -546,6 +582,10 @@ func (s *ProjectService) GetProjectsByOwner(ctx context.Context, ownerID string)
 
 		// Set the owner (we already know the owner ID)
 		project.Owner = &model.User{ID: ownerID}
+
+		if timeline.Valid {
+			project.Timeline = &timeline.String
+		}
 
 		projects = append(projects, project)
 	}
@@ -638,12 +678,13 @@ func (s *ProjectService) GetRelatedProjects(ctx context.Context, projectID strin
 			Owner: &model.User{},
 		}
 		var technologies, learningObjectives []string
+		var timeline sql.NullString
 		var matchingTechnologies int
 
 		err := rows.Scan(
 			&project.ID, &project.Title, &project.Description, &project.Category, &project.Status,
 			pq.Array(&technologies), &project.OpenPositions, &project.TimeCommitment,
-			pq.Array(&learningObjectives), &project.Popularity, &project.Timeline,
+			pq.Array(&learningObjectives), &project.Popularity, &timeline,
 			&project.CreatedAt, &project.UpdatedAt,
 			&project.Owner.ID, &project.Owner.Username, &project.Owner.Email,
 			&matchingTechnologies,
@@ -654,6 +695,10 @@ func (s *ProjectService) GetRelatedProjects(ctx context.Context, projectID strin
 
 		project.Technologies = technologies
 		project.LearningObjectives = learningObjectives
+
+		if timeline.Valid {
+			project.Timeline = &timeline.String
+		}
 
 		relatedProjects = append(relatedProjects, project)
 	}
