@@ -505,9 +505,9 @@ export const APPROVE_JOIN_REQUEST = gql`
   }
 `;
 
-export const REJECT_JOIN_REQUEST = gql`
-  mutation RejectJoinRequest($requestId: ID!) {
-    rejectJoinRequest(requestId: $requestId) {
+export const DENY_JOIN_REQUEST = gql`
+  mutation DenyJoinRequest($requestId: ID!) {
+    denyJoinRequest(requestId: $requestId) {
       id
       status
     }

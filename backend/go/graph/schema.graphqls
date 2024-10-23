@@ -162,6 +162,9 @@ type Mutation {
 
   joinProject(projectId: ID!): Project!
   requestToJoinProject(projectId: ID!): JoinRequest!
+
+  approveJoinRequest(requestId: ID!): JoinRequest!
+  denyJoinRequest(requestId: ID!): JoinRequest!
 }
 
 type JoinRequest {

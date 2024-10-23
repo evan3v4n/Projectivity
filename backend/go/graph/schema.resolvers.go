@@ -234,6 +234,24 @@ func (r *mutationResolver) RequestToJoinProject(ctx context.Context, projectID s
 	return joinRequest, nil
 }
 
+// ApproveJoinRequest is the resolver for the approveJoinRequest field.
+func (r *mutationResolver) ApproveJoinRequest(ctx context.Context, requestID string) (*model.JoinRequest, error) {
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unauthorized: %w", err)
+	}
+	return r.JoinRequestService.ApproveJoinRequest(ctx, requestID, userID)
+}
+
+// DenyJoinRequest is the resolver for the denyJoinRequest field.
+func (r *mutationResolver) DenyJoinRequest(ctx context.Context, requestID string) (*model.JoinRequest, error) {
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unauthorized: %w", err)
+	}
+	return r.JoinRequestService.DenyJoinRequest(ctx, requestID, userID)
+}
+
 // Project is the resolver for the project field.
 func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project, error) {
 	return r.ProjectService.GetProjectByID(ctx, id)
@@ -324,11 +342,27 @@ func (r *queryResolver) JoinRequests(ctx context.Context, projectID string) ([]*
 	return r.JoinRequestService.GetJoinRequestsByProject(ctx, projectID)
 }
 
-// // Mutation returns MutationResolver implementation.
-// func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
-// // Query returns QueryResolver implementation.
-// func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *mutationResolver) RejectJoinRequest(ctx context.Context, requestID string) (*model.JoinRequest, error) {
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unauthorized: %w", err)
+	}
+	return r.JoinRequestService.RejectJoinRequest(ctx, requestID, userID)
+}
+*/

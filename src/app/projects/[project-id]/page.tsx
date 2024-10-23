@@ -456,6 +456,7 @@ export default function ProjectShowcase() {
                 </div>
               </div>
             </CardContent>
+            <TeamMembers members={project.teamMembers} />
             <CardFooter className="flex flex-col space-y-2">
               {isOwner ? (
                 <>
@@ -467,11 +468,11 @@ export default function ProjectShowcase() {
                     <Trash className="mr-2 h-4 w-4" />
                     Delete Project
                   </Button>
-                  {joinRequests.length > 0 && (
+                  {/* {joinRequests.length > 0 && (
                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowJoinRequests(true)}>
                       View Join Requests ({joinRequests.length})
                     </Button>
-                  )}
+                  )} */}
                 </>
               ) : isUserMember ? (
                 <Button disabled className="w-full bg-gray-400 text-white cursor-not-allowed">
@@ -715,3 +716,4 @@ export default function ProjectShowcase() {
     </main>
   )
 }
+

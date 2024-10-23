@@ -94,7 +94,8 @@ func JoinProject(ctx context.Context, projectID, userID string) error {
 	return Transaction(ctx, func(tx *sql.Tx) error {
 		// Check if the project exists and has open positions
 		var openPositions int
-		err := tx.QueryRowContext(ctx, "SELECT open_positions FROM projects WHERE id = $1", projectID).Scan(&openPositions)
+		var teamID string
+		err := tx.QueryRowContext(ctx, "SELECT open_positions, team_id FROM projects WHERE id = $1", projectID).Scan(&openPositions, &teamID)
 		if err != nil {
 			return fmt.Errorf("failed to get project: %v", err)
 		}
@@ -104,7 +105,7 @@ func JoinProject(ctx context.Context, projectID, userID string) error {
 
 		// Check if the user is already a member
 		var count int
-		err = tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM team_members WHERE project_id = $1 AND user_id = $2", projectID, userID).Scan(&count)
+		err = tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND user_id = $2", teamID, userID).Scan(&count)
 		if err != nil {
 			return fmt.Errorf("failed to check team membership: %v", err)
 		}
@@ -113,7 +114,7 @@ func JoinProject(ctx context.Context, projectID, userID string) error {
 		}
 
 		// Add the user to the team
-		_, err = tx.ExecContext(ctx, "INSERT INTO team_members (project_id, user_id, role) VALUES ($1, $2, $3)", projectID, userID, "Member")
+		_, err = tx.ExecContext(ctx, "INSERT INTO team_members (team_id, user_id, role) VALUES ($1, $2, $3)", teamID, userID, "Member")
 		if err != nil {
 			return fmt.Errorf("failed to add team member: %v", err)
 		}

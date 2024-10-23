@@ -23,7 +23,7 @@ func main() {
 		Host:     "localhost",
 		Port:     5432,
 		User:     "projectivity_user",
-		Password: "Pappydapenguin1!",
+		Password: PASSWORD,
 		DBName:   "projectivity",
 		SSLMode:  "disable",
 	}

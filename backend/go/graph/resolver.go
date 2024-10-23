@@ -16,8 +16,8 @@ type Resolver struct {
 	JoinRequestService *services.JoinRequestService
 }
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+// // Query returns QueryResolver implementation.
+// func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+// // Mutation returns MutationResolver implementation.
+// func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
